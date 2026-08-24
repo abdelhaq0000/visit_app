@@ -1,0 +1,177 @@
+/* Base styles shared by all uses of PlayerSidebar.
+   Position/size/padding are set by page-specific classes (pp-sidebar, tagger-sidebar). */
+
+.player-sidebar {
+  background: #7e0101;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.18);
+  z-index: 90;
+}
+
+.player-sidebar::-webkit-scrollbar { width: 3px; }
+.player-sidebar::-webkit-scrollbar-thumb { background: rgba(184, 155, 94, 0.35); border-radius: 4px; }
+
+/* Player nav arrows */
+.ps-player-nav {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ps-nav-btn {
+  border: 1px solid #7e0101;
+  background: #7e0101;
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ps-nav-btn:hover { background: #e9e9e9; color: #7e0101; }
+
+.ps-counter {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+}
+
+/* Photo */
+.ps-photo {
+  width: 150px;
+  height: 200px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+/* Badge / name / position */
+.ps-badge {
+  background: #b89b5e;
+  color: #7e0101;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ps-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.ps-position {
+  font-size: 12px;
+  color: #c9a96e;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* Choose player button */
+.ps-pick-btn {
+  width: 100%;
+  background: rgba(184, 155, 94, 0.13);
+  border: 1px solid rgba(184, 155, 94, 0.3);
+  color: #b89b5e;
+  padding: 7px 0;
+  border-radius: 8px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: 14px;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.ps-pick-btn:hover { background: rgba(184, 155, 94, 0.25); }
+
+/* Divider */
+.ps-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(184, 155, 94, 0.3);
+  margin-bottom: 14px;
+}
+
+/* Section title */
+.ps-section-title {
+  width: 100%;
+  color: #b89b5e;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 12px 0 9px;
+  font-weight: bold;
+}
+
+/* Info list */
+.ps-info-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ps-info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #ddd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 7px;
+}
+
+.ps-info-item span:first-child {
+  color: #b89b5e;
+  font-weight: bold;
+}
+
+/* Session stats grid */
+.ps-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ps-stat-box {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(184, 155, 94, 0.25);
+  border-radius: 10px;
+  padding: 9px 6px;
+  text-align: center;
+}
+
+.ps-stat-val {
+  font-size: 18px;
+  font-weight: bold;
+  color: #b89b5e;
+}
+
+.ps-stat-lbl {
+  font-size: 9px;
+  color: #aaa;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

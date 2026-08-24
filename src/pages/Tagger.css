@@ -1,0 +1,537 @@
+.tagger-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* ── FLASH TOAST ──────────────────────────────── */
+.tagger-flash {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #3d0000;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.tagger-flash.show { transform: translateY(0); opacity: 1; }
+
+/* ── NAVBAR EXTRAS ────────────────────────────── */
+.tagger-team-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.tagger-team-badge.us { background: #fff0f0; color: #7e0101; border: 1px solid #f0c9c9; }
+.tagger-team-badge.opponent { background: #eef2ff; color: #1e3a8a; border: 1px solid #c7d2fe; }
+
+.tagger-session-badge {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tagger-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.tagger-dot.live {
+  background: #09a51d;
+  animation: tagger-pulse 1.2s infinite;
+}
+
+@keyframes tagger-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.tagger-back-btn {
+  background: #ffffff;
+  color: #a00;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tagger-back-btn:hover { background: #a00; color: #fff; }
+
+.tagger-save-btn {
+  background: #09a51d;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tagger-save-btn:hover { background: #078018; }
+
+/* ── STEP 1: Player selection ─────────────────── */
+.tagger-select-content {
+  padding-top: 65px;
+  min-height: 100vh;
+}
+
+.tagger-grid-wrap {
+  max-width: 860px;
+  margin: 36px auto;
+  padding: 0 24px 60px;
+}
+
+/* ── Team tabs (Morocco / Opponent) ───────────── */
+.tagger-team-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.tagger-team-tab {
+  padding: 9px 20px;
+  border-radius: 20px;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  color: #888;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.tagger-team-tab:hover { border-color: #b89b5e; color: #3d0000; }
+
+.tagger-team-tab.active.us { background: #7e0101; border-color: #7e0101; color: #fff; }
+.tagger-team-tab.active.opponent { background: #1e3a8a; border-color: #1e3a8a; color: #fff; }
+
+.tagger-grid-label {
+  font-size: 12px;
+  color: #b89b5e;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #b89b5e;
+}
+
+.tagger-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.tagger-picker-card {
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 2px;
+  padding: 18px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.tagger-picker-card:hover {
+  border-color: #b89b5e;
+  box-shadow: 0 6px 16px rgba(61, 0, 0, 0.14);
+  transform: translateY(-3px);
+}
+
+.tagger-picker-card img {
+  width: 90px;
+  height: 115px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+/* shared player card text classes also used in pp picker */
+.pc-name { font-size: 14px; font-weight: bold; color: #3d0000; line-height: 1.3; margin-bottom: 4px; }
+.pc-pos  { font-size: 11px; color: #888; margin-bottom: 8px; }
+.pc-num  {
+  display: inline-block;
+  background: #7e0101;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 12px;
+  border-radius: 20px;
+}
+
+.tagger-select-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #b89b5e;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tagger-picker-card:hover .tagger-select-hint { opacity: 1; }
+
+/* ── STEP 2: Layout ───────────────────────────── */
+.tagger-layout {
+  display: flex;
+  padding-top: 65px;
+  min-height: 100vh;
+}
+
+.tagger-sidebar {
+  position: fixed;
+  top: 65px;
+  left: 72px;
+  width: 230px;
+  height: calc(100vh - 65px);
+  padding: 20px 16px 20px;
+}
+
+/* Photo size override for tagger sidebar */
+.tagger-sidebar .ps-photo {
+  width: 130px;
+  height: 165px;
+}
+
+/* Opponent (France) sidebar tint */
+.tagger-sidebar.opponent { background: #1e3a8a; }
+.tagger-sidebar.opponent .ps-badge { background: #b8c4e8; color: #1e3a8a; }
+.tagger-sidebar.opponent .ps-position { color: #a8b8e8; }
+.tagger-sidebar.opponent .ps-pick-btn { color: #a8b8e8; border-color: rgba(168, 184, 232, 0.3); background: rgba(168, 184, 232, 0.13); }
+.tagger-sidebar.opponent .ps-pick-btn:hover { background: rgba(168, 184, 232, 0.25); }
+.tagger-sidebar.opponent .ps-divider { background: rgba(168, 184, 232, 0.3); }
+.tagger-sidebar.opponent .ps-section-title { color: #a8b8e8; }
+.tagger-sidebar.opponent .ps-info-item span:first-child { color: #a8b8e8; }
+.tagger-sidebar.opponent .ps-stat-box { border-color: rgba(168, 184, 232, 0.25); }
+.tagger-sidebar.opponent .ps-stat-val { color: #a8b8e8; }
+
+.tagger-main {
+  margin-left: 230px;
+  flex: 1;
+  min-height: calc(100vh - 65px);
+  padding: 20px 22px;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── TIMER BAR ────────────────────────────────── */
+.tagger-timer-bar {
+  background: #7e0101;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  box-shadow: 0 4px 14px rgba(61, 0, 0, 0.2);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tagger-timer-label-group { display: flex; flex-direction: column; }
+.tagger-session-name { font-size: 11px; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; }
+.tagger-player-name  { font-size: 18px; font-weight: bold; color: #fff; margin-top: 2px; }
+
+.tagger-timer-display {
+  font-size: 42px;
+  font-weight: bold;
+  color: #fff;
+  font-family: monospace;
+  letter-spacing: 3px;
+}
+
+.tagger-timer-controls { display: flex; gap: 10px; }
+
+.t-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+}
+
+.t-start { background: #09a51d; color: #fff; }
+.t-pause { background: #b89b5e; color: #7e0101; }
+.t-reset { background: rgba(255, 255, 255, 0.12); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
+
+.tagger-event-count {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 16px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.ec-num { font-size: 24px; font-weight: bold; color: #b89b5e; }
+.ec-lbl { font-size: 10px; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; }
+
+/* ── ACTION PANEL ─────────────────────────────── */
+.tagger-action-panel {
+  background: #fff;
+  border: 2px solid #b89b5e;
+  padding: 18px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+
+.tagger-panel-title {
+  color: #3d0000;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #b89b5e;
+}
+
+.tagger-action-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tagger-action-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.tagger-cat-label {
+  font-size: 13px;
+  color: #b89b5e;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  width: 100px;
+  flex-shrink: 0;
+  padding-top: 14px;
+}
+
+.tagger-action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Action button base */
+.action-btn {
+  padding: 10px 14px;
+  border: 2px solid;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+  user-select: none;
+  border-radius: 6px;
+}
+
+.action-btn:active { transform: scale(0.93); }
+.action-btn:hover { color: #fff; }
+
+/* Frequency sizes */
+.freq-high { min-width: 110px; }
+.freq-mid  { min-width: 90px; }
+.freq-low  { min-width: 80px; }
+
+/* Color tones */
+.tone-pass     { border-color: #0f766e; color: #0f766e; background: #ecfdf5; }
+.tone-pass:hover { background: #0f766e; }
+.tone-carry    { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+.tone-carry:hover { background: #7c3aed; }
+.tone-attack   { border-color: #c2410c; color: #c2410c; background: #fff7ed; }
+.tone-attack:hover { background: #c2410c; }
+.tone-air      { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+.tone-air:hover { background: #2563eb; }
+.tone-def-main { border-color: #92400e; color: #92400e; background: #fffbeb; }
+.tone-def-main:hover { background: #92400e; }
+.tone-def-stop { border-color: #991b1b; color: #991b1b; background: #fef2f2; }
+.tone-def-stop:hover { background: #991b1b; }
+.tone-goal     { border-color: #15803d; color: #15803d; background: #f0fdf4; }
+.tone-goal:hover { background: #15803d; }
+.tone-assist   { border-color: #0891b2; color: #0891b2; background: #ecfeff; }
+.tone-assist:hover { background: #0891b2; }
+.tone-foul     { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.tone-foul:hover { background: #dc2626; }
+.tone-card     { border-color: #ca8a04; color: #854d0e; background: #fef9c3; }
+.tone-card:hover { background: #ca8a04; }
+.tone-set      { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+.tone-set:hover { background: #4f46e5; }
+
+/* ── EVENT LOG ────────────────────────────────── */
+.tagger-log-panel {
+  background: #fff;
+  border: 2px solid #b89b5e;
+  padding: 18px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+
+.tagger-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.tagger-log-header-left { display: flex; align-items: center; gap: 10px; }
+
+.tagger-log-title {
+  color: #3d0000;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tagger-log-count {
+  background: #7e0101;
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.tagger-log-actions { display: flex; gap: 8px; }
+
+.tagger-log-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+}
+
+.tagger-log-btn.clear  { background: #f0f0f0; color: #555; }
+.tagger-log-btn.export { background: #09a51d; color: #fff; }
+
+.tagger-log-empty {
+  text-align: center;
+  color: #bbb;
+  font-size: 13px;
+  padding: 24px 0;
+  font-style: italic;
+}
+
+.tagger-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tagger-log-table th {
+  text-align: left;
+  padding: 7px 10px;
+  background: #fdf8ee;
+  color: #7c0000;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #b89b5e;
+}
+
+.tagger-log-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: middle;
+}
+
+.tagger-log-table tr:last-child td { border-bottom: none; }
+.tagger-log-table tr:hover td { background: #fffaf5; }
+
+.tagger-tag-action {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.tag-ball  { background: #fff0f0; color: #7e0101; }
+.tag-def   { background: #fdf3e0; color: #7a5c00; }
+.tag-event { background: #e8fae8; color: #09a51d; }
+
+.tagger-row-btn {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 7px 10px;
+  margin-right: 5px;
+}
+
+.tagger-row-btn.edit { background: #fdf3e0; color: #7a5c00; }
+.tagger-row-btn.del  { background: #fff0f0; color: #c00; }
+.tagger-row-btn:hover { filter: brightness(0.95); }
+
+.tagger-log-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.tagger-page-btn {
+  border: none;
+  border-radius: 6px;
+  background: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: bold;
+  padding: 7px 12px;
+}
+
+.tagger-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── RESPONSIVE ───────────────────────────────── */
+@media (max-width: 900px) {
+  .tagger-picker-grid { grid-template-columns: repeat(2, 1fr); }
+  .tagger-sidebar { width: 190px; }
+  .tagger-main { margin-left: 190px; }
+}
+
+@media (max-width: 640px) {
+  .tagger-picker-grid { grid-template-columns: 1fr 1fr; }
+  .tagger-sidebar { position: static; width: 100%; height: auto; }
+  .tagger-main { margin-left: 0; }
+  .tagger-layout { flex-direction: column; }
+  .tagger-action-row { flex-direction: column; gap: 8px; }
+  .tagger-cat-label { width: auto; padding-top: 0; }
+}

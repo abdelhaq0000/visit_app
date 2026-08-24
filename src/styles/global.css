@@ -1,0 +1,17 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+body {
+  padding-left: 72px;
+  color: #2b2b2b;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding-left: 0;
+  }
+}

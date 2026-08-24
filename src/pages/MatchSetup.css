@@ -1,0 +1,845 @@
+.ms-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* ── Layout: sidebar + main ──────────────────────────────── */
+.ms-layout {
+  display: flex;
+  padding-top: 65px;
+  min-height: calc(100vh - 65px);
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.ms-sidebar {
+  position: fixed;
+  top: 65px;
+  left: 72px;
+  width: 260px;
+  height: calc(100vh - 65px);
+  background: #7e0101;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 18px 20px;
+  overflow-y: auto;
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.18);
+  z-index: 90;
+}
+
+.ms-sidebar::-webkit-scrollbar { width: 3px; }
+.ms-sidebar::-webkit-scrollbar-thumb { background: rgba(184,155,94,0.35); border-radius: 4px; }
+
+.ms-sb-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 14px;
+}
+
+.ms-sb-badge {
+  background: #b89b5e;
+  color: #7e0101;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 3px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.ms-sb-match-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.ms-sb-opponent {
+  font-size: 12px;
+  color: #c9a96e;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ms-sb-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(184,155,94,0.3);
+  margin: 14px 0;
+}
+
+.ms-sb-section-title {
+  width: 100%;
+  color: #b89b5e;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 9px;
+  font-weight: bold;
+}
+
+.ms-sb-info-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ms-sb-info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #ddd;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 6px;
+}
+
+.ms-sb-info-item span:first-child { color: #b89b5e; font-weight: bold; }
+.ms-sb-info-item span:last-child { color: #fff; max-width: 130px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ms-sb-ok   { color: #6ede6e !important; font-weight: bold !important; }
+.ms-sb-warn { color: #ffb74d !important; font-weight: bold !important; }
+
+.ms-sb-formation-badge {
+  font-size: 24px;
+  font-weight: bold;
+  color: #b89b5e;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* GPS dots grid */
+.ms-sb-gps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.ms-sb-gps-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 2px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  font-size: 10px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.35);
+  transition: all 0.2s;
+}
+
+.ms-sb-gps-dot.filled {
+  border-color: #b89b5e;
+  background: rgba(184,155,94,0.15);
+  color: #b89b5e;
+}
+
+.ms-sb-gps-status {
+  font-size: 11px;
+  color: #ffb74d;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ms-sb-gps-status.ok { color: #6ede6e; }
+
+.ms-sb-saved {
+  font-size: 11px;
+  color: #6ede6e;
+  text-align: center;
+  margin-bottom: 8px;
+  background: rgba(110,222,110,0.12);
+  padding: 5px 10px;
+  border-radius: 2px;
+  width: 100%;
+}
+
+.ms-sb-btn-save {
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px;
+  background: rgba(184,155,94,0.13);
+  border: 1.5px solid rgba(184,155,94,0.4);
+  color: #b89b5e;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
+  text-transform: uppercase;
+}
+
+.ms-sb-btn-save:hover { background: rgba(184,155,94,0.25); }
+
+.ms-sb-btn-start {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  background: #b89b5e;
+  border: none;
+  color: #3d0000;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.ms-sb-btn-start:hover { background: #d4b876; }
+
+/* ── Main content ────────────────────────────────────────── */
+.ms-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 28px 28px 40px;
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+.ms-section {
+  background: #fff;
+  border-radius: 16px;
+  border: 2px solid #e8e0d0;
+  padding: 24px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+.ms-section-header {
+  margin-bottom: 20px;
+}
+
+.ms-section-header h2 {
+  font-size: 17px;
+  color: #3d0000;
+  font-weight: bold;
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8d8b8;
+}
+
+.ms-section-desc {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* ── Match info grid ─────────────────────────────────────── */
+.ms-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-field label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #7c0000;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ms-field input,
+.ms-field select {
+  padding: 9px 12px;
+  border: 1.5px solid #d8cfc0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+  background: #faf8f5;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ms-field input:focus,
+.ms-field select:focus { border-color: #7c0000; }
+
+.ms-field-hint {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+}
+
+.ms-field-row {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.ms-subfield {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.ms-input-unit {
+  display: flex;
+  align-items: center;
+}
+
+.ms-input-unit input {
+  border-radius: 8px 0 0 8px;
+  flex: 1;
+}
+
+.ms-input-unit span {
+  background: #f0e8d8;
+  border: 1.5px solid #d8cfc0;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 9px 10px;
+  font-size: 12px;
+  color: #7c0000;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* ── GPS corners ─────────────────────────────────────────── */
+.ms-corners-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  margin-bottom: 14px;
+}
+
+.ms-corner-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ms-corner-svg {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #2d6a2d;
+  display: block;
+}
+
+.ms-field-dims {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 7px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.ms-field-dims.valid { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+.ms-field-dims.warn  { background: #fff8e1; color: #7a5900; border: 1px solid #ffe082; }
+
+.ms-corners-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ms-corner-card {
+  border: 1.5px solid #e0d0b0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #faf8f5;
+}
+
+.ms-corner-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d0000;
+  flex-wrap: wrap;
+}
+
+.ms-corner-badge {
+  background: #3d0000;
+  color: #b89b5e;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.ms-corner-sub {
+  color: #999;
+  font-size: 11px;
+  font-weight: normal;
+}
+
+.ms-corner-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ms-gps-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ms-gps-field label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.ms-gps-field input {
+  padding: 7px 9px;
+  border: 1.5px solid #d8cfc0;
+  border-radius: 7px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #333;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ms-gps-field input:focus { border-color: #7c0000; }
+
+.ms-gps-hint {
+  background: #f5f5f5;
+  border-left: 3px solid #b89b5e;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #555;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.5;
+}
+
+/* ── Formation selector ──────────────────────────────────── */
+.ms-formation-selector {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ms-formation-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 18px;
+  border: 2px solid #e0d0b0;
+  border-radius: 10px;
+  background: #faf8f5;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ms-formation-btn:hover { border-color: #b89b5e; background: #fff5e8; }
+.ms-formation-btn.active { border-color: #7c0000; background: #fff0f0; }
+
+.ms-fb-label { font-size: 18px; font-weight: bold; color: #3d0000; }
+.ms-fb-desc  { font-size: 10px; color: #888; }
+
+/* ── Formation layout ────────────────────────────────────── */
+.ms-formation-layout {
+  display: grid;
+  grid-template-columns: 560px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.ms-formation-canvas-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ms-formation-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 2px solid #2d6a2d;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+.ms-canvas-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #666;
+}
+
+.ms-cl-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.ms-cl-squad  { background: #3d0000; border: 2px solid #b89b5e; }
+.ms-cl-custom { background: #2a2a2a; border: 2px solid #888; }
+
+/* ── Player assignment table ─────────────────────────────── */
+.ms-player-table-wrap {
+  background: #faf8f5;
+  border-radius: 12px;
+  border: 1.5px solid #e0d0b0;
+  overflow: hidden;
+}
+
+.ms-player-table-header {
+  display: grid;
+  grid-template-columns: 28px 44px 1fr 1fr;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #3d0000;
+  color: #b89b5e;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.ms-player-table-body {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.ms-player-row {
+  display: grid;
+  grid-template-columns: 28px 44px 1fr 1fr;
+  gap: 8px;
+  padding: 7px 14px;
+  align-items: center;
+  border-bottom: 1px solid #f0e8d8;
+  font-size: 12px;
+}
+
+.ms-player-row:last-child { border-bottom: none; }
+.ms-player-row:hover { background: rgba(184,155,94,0.08); }
+
+.ms-pr-num { font-weight: bold; color: #aaa; font-size: 11px; text-align: center; }
+
+.ms-pr-role-badge {
+  background: #3d0000;
+  color: #b89b5e;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.ms-pr-role-label { color: #555; font-size: 11px; }
+
+.ms-pr-select {
+  padding: 5px 8px;
+  border: 1.5px solid #d8cfc0;
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.ms-pr-select:focus { border-color: #7c0000; }
+
+.ms-pr-custom-input {
+  padding: 5px 8px;
+  border: 1.5px solid #b89b5e;
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: inherit;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  margin-top: 4px;
+  grid-column: 4;
+}
+
+.ms-subs-note {
+  padding: 10px 14px;
+  background: #f5f0e8;
+  border-top: 1px solid #e8dcc8;
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+}
+
+/* ── Advanced params ─────────────────────────────────────── */
+.ms-section-adv { padding: 0; overflow: hidden; }
+
+.ms-adv-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  color: #3d0000;
+  text-align: left;
+}
+
+.ms-adv-toggle:hover { background: #faf8f5; }
+
+.ms-adv-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  color: #b89b5e;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.ms-adv-arrow.open { transform: rotate(180deg); }
+
+.ms-adv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 0 28px 24px;
+  border-top: 1px solid #f0e8d8;
+}
+
+/* ── Expert system rules ─────────────────────────────────── */
+.ms-expert-section {
+  margin-top: 24px;
+  border-top: 1px solid #f0e8d8;
+  padding-top: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
+  padding-bottom: 24px;
+}
+
+.ms-expert-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #3d0000;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ms-expert-title span.ms-expert-badge {
+  background: #3d0000;
+  color: #b89b5e;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+/* Rule builder row */
+.ms-rule-builder {
+  display: grid;
+  grid-template-columns: 1fr 80px 90px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  background: #faf8f5;
+  border: 1.5px solid #e0d0b0;
+  border-radius: 2px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.ms-rule-builder select,
+.ms-rule-builder input[type="text"],
+.ms-rule-builder input[type="number"] {
+  padding: 7px 10px;
+  border: 1.5px solid #d8cfc0;
+  border-radius: 2px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.ms-rule-builder select:focus,
+.ms-rule-builder input:focus { border-color: #7c0000; }
+
+.ms-rule-builder-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #b89b5e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.ms-rule-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ms-rule-add-btn {
+  padding: 7px 14px;
+  background: #3d0000;
+  color: #b89b5e;
+  border: none;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  align-self: flex-end;
+  transition: background 0.2s;
+}
+
+.ms-rule-add-btn:hover { background: #600000; }
+
+/* Rules list */
+.ms-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ms-rules-empty {
+  font-size: 12px;
+  color: #bbb;
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+.ms-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1.5px solid #e0d0b0;
+  border-radius: 2px;
+  font-size: 12px;
+  color: #444;
+}
+
+.ms-rule-item:hover { border-color: #b89b5e; }
+
+.ms-rule-num {
+  color: #ccc;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.ms-rule-if {
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #b89b5e;
+  background: #faf0dc;
+  padding: 2px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ms-rule-cond {
+  flex: 1;
+  color: #3d0000;
+  font-weight: 600;
+}
+
+.ms-rule-then {
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ms-rule-then.act-red    { background: #b00000; }
+.ms-rule-then.act-orange { background: #c55600; }
+.ms-rule-then.act-yellow { background: #8a6600; }
+.ms-rule-then.act-info   { background: #0060a0; }
+.ms-rule-then.act-pause  { background: #2a7a2a; }
+
+.ms-rule-action-label {
+  flex: 1;
+  color: #555;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.ms-rule-del-btn {
+  background: none;
+  border: 1px solid #e0d0b0;
+  border-radius: 2px;
+  color: #bbb;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.ms-rule-del-btn:hover { border-color: #d00000; color: #d00000; background: #fff0f0; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .ms-formation-layout { grid-template-columns: 1fr; }
+  .ms-formation-canvas { max-width: 560px; }
+}
+
+@media (max-width: 1050px) {
+  .ms-info-grid { grid-template-columns: repeat(2, 1fr); }
+  .ms-adv-grid  { grid-template-columns: repeat(2, 1fr); }
+  .ms-corners-layout { grid-template-columns: 1fr; }
+  .ms-corner-diag { display: none; }
+}
+
+@media (max-width: 850px) {
+  .ms-sidebar { width: 200px; }
+  .ms-content { margin-left: 200px; }
+}
+
+@media (max-width: 640px) {
+  .ms-sidebar { position: static; width: 100%; height: auto; }
+  .ms-content { margin-left: 0; padding: 20px 16px 32px; }
+  .ms-layout  { flex-direction: column; }
+  .ms-info-grid { grid-template-columns: 1fr; }
+  .ms-corners-grid { grid-template-columns: 1fr; }
+  .ms-adv-grid { grid-template-columns: 1fr; }
+}

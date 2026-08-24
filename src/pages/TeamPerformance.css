@@ -1,0 +1,692 @@
+.tp-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.tp-match-pill {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #555;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.tp-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff5f5;
+  border-color: #f0c9c9;
+  color: #7e0101;
+  font-weight: bold;
+}
+
+.tp-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d03b3b;
+  animation: tp-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.tp-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #d03b3b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-left: 10px;
+}
+
+.tp-layout {
+  display: flex;
+  padding-top: 65px;
+  min-height: 100vh;
+}
+
+/* Fixed team sidebar */
+.tp-sidebar {
+  position: fixed;
+  top: 65px;
+  left: 72px;
+  width: 245px;
+  height: calc(100vh - 65px);
+  background: #7e0101;
+  color: #fff;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.18);
+  overflow-y: auto;
+  z-index: 90;
+}
+
+.tp-sidebar::-webkit-scrollbar { width: 3px; }
+.tp-sidebar::-webkit-scrollbar-thumb { background: rgba(184, 155, 94, 0.35); border-radius: 4px; }
+
+.tp-team-logo {
+  width: 142px;
+  height: 142px;
+  object-fit: contain;
+  border-radius: 50%;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.tp-team-name {
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 14px;
+}
+
+.tp-rating-card {
+  width: 100%;
+  padding: 16px 12px;
+}
+
+.tp-rating-card span {
+  display: block;
+  color: #b89b5e;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tp-rating-score { font-size: 48px; line-height: 1; color: #fff; font-weight: bold; }
+.tp-rating-label { margin-top: 8px; color: #ddd; font-size: 13px; }
+
+.tp-rating-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.tp-rating-fill {
+  height: 100%;
+  width: 78%;
+  background: #b89b5e;
+  border-radius: 999px;
+}
+
+.tp-sidebar-card {
+  width: 100%;
+  padding: 14px 12px;
+  margin-top: 12px;
+}
+
+.tp-sidebar-card-title {
+  display: block;
+  color: #b89b5e;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tp-rating-breakdown { display: flex; flex-direction: column; gap: 9px; text-align: left; }
+
+.tp-rating-line {
+  display: grid;
+  grid-template-columns: 62px 1fr 30px;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.tp-rating-track {
+  height: 7px;
+  background: rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tp-rating-track div {
+  height: 100%;
+  background: #b89b5e;
+  border-radius: 999px;
+}
+
+/* Main content */
+.tp-main {
+  margin-left: 245px;
+  flex: 1;
+  min-height: calc(100vh - 65px);
+  padding: clamp(16px, 2vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.4vw, 18px);
+}
+
+.tp-page-head { margin-bottom: 0; }
+.tp-page-head h1 { color: #3d0000; font-size: clamp(22px, 2.2vw, 26px); margin-bottom: 6px; }
+.tp-page-head p { color: #666; font-size: 14px; max-width: 720px; line-height: 1.45; }
+
+.tp-panel {
+  background: #fff;
+  border: 2px solid #b89b5e;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  padding: clamp(14px, 1.5vw, 20px);
+}
+
+.tp-panel-title {
+  color: #3d0000;
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #b89b5e;
+  display: flex;
+  align-items: center;
+}
+
+/* Chat */
+.tp-chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tp-chat-box {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.tp-chat-box::-webkit-scrollbar { width: 5px; }
+.tp-chat-box::-webkit-scrollbar-track { background: transparent; }
+.tp-chat-box::-webkit-scrollbar-thumb { background: rgba(184, 155, 94, 0.45); border-radius: 4px; }
+.tp-chat-box::-webkit-scrollbar-thumb:hover { background: rgba(184, 155, 94, 0.7); }
+
+.tp-chat-message {
+  max-width: 88%;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tp-chat-message.bot {
+  background: #fdf8ee;
+  border: 1px solid #e8d3a2;
+  color: #3d0000;
+}
+
+.tp-chat-message.coach {
+  background: #7e0101;
+  color: #fff;
+  align-self: flex-end;
+}
+
+.tp-chat-input {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.tp-chat-input input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.tp-chat-input button {
+  border: none;
+  background: #3d0000;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ── Substitution Assistant ────────────────────────────── */
+.tp-sub-section { margin-bottom: 0; }
+
+.tp-sub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.tp-sub-card {
+  background: #fff;
+  border: 2px solid #b89b5e;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  padding: clamp(14px, 1.4vw, 18px);
+}
+
+.tp-sub-card.urgent { border-left: 4px solid #7e0101; }
+
+.tp-sub-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.tp-sub-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #b89b5e;
+  flex: 0 0 auto;
+  background: #f0f0f0;
+}
+
+.tp-sub-badge {
+  display: inline-block;
+  background: #fdf8ee;
+  color: #7e0101;
+  border: 1px solid #e8d3a2;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.tp-sub-card h3 { color: #3d0000; font-size: 15px; margin-bottom: 6px; }
+.tp-sub-reason { color: #666; font-size: 13px; line-height: 1.4; margin-bottom: 8px; }
+.tp-sub-injury { color: #555; font-size: 12.5px; line-height: 1.4; margin-bottom: 8px; }
+.tp-sub-injury strong { color: #7e0101; }
+.tp-sub-replacement { color: #555; font-size: 12.5px; line-height: 1.4; }
+.tp-sub-replacement strong { color: #7e0101; }
+
+.tp-injury-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+
+.tp-injury-badge.high { background: #fdecea; color: #b3261e; }
+.tp-injury-badge.medium { background: #fff4e0; color: #b8860b; }
+.tp-injury-badge.low { background: #e9f9ec; color: #1e7a34; }
+
+/* ── Zone recommendation player chips ──────────────────── */
+.tp-zone-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tp-zone-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #e8d3a2;
+  border-radius: 999px;
+  padding: 3px 10px 3px 3px;
+}
+
+.tp-zone-player-chip img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+
+.tp-zone-player-chip span {
+  font-size: 11px;
+  font-weight: bold;
+  color: #3d0000;
+}
+
+/* ── Live positioning pitch — same canvas style as PlayerPerformance ── */
+.tp-field-canvas-wrap {
+  background: #1a3d1a;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid #2d6a2d;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  aspect-ratio: 840 / 543;
+}
+
+.tp-field-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/* ── Live Positioning section — pitch (left) + Coach Chatbot (right), same grid as PlayerPerformance's field+chat section ── */
+.tp-field-section { margin-bottom: 0; }
+
+.tp-field-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tp-field-section-title {
+  color: #3d0000;
+  font-size: 15px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.tp-field-layout {
+  display: grid;
+  grid-template-columns: 1fr 288px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.tp-fr-panel {
+  background: #fff;
+  border: 2px solid #b89b5e;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tp-fr-chat {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tp-fr-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: bold;
+  color: #3d0000;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #b89b5e;
+  flex-shrink: 0;
+}
+
+.tp-ai-assist-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e7a34;
+  box-shadow: 0 0 0 3px rgba(30, 122, 52, 0.18);
+  flex: 0 0 auto;
+  animation: tp-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Simple photo-only swap row ─────────────────────────── */
+.tp-swap-group + .tp-swap-group { margin-top: 16px; }
+
+.tp-swap-group-label {
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tp-swap-group-label.us { color: #7e0101; }
+.tp-swap-group-label.opponent { color: #1e3a8a; }
+
+.tp-swap-row {
+  display: flex;
+  gap: 14px;
+  padding: 6px 0;
+}
+
+.tp-swap-photo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+
+.tp-swap-photo.us { border: 3px solid #7e0101; }
+
+.tp-swap-photo.opponent {
+  border: 3px solid #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1e3a8a;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+/* ── Substitution recommendations — team grouping ──────── */
+.tp-sub-team-label {
+  color: #3d0000;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 4px 0 10px;
+}
+
+.tp-sub-team-label.opponent { color: #1e3a8a; margin-top: 20px; }
+
+.tp-sub-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1e3a8a;
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Passing network */
+.tp-network-pitch { width: 100%; }
+
+.tp-network-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tp-network-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.tp-network-node img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fdf8ee;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  background: #f0f0f0;
+}
+
+.tp-network-node-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.tp-network-node-label strong { color: #fff; font-size: 10.5px; }
+.tp-network-node-label span { color: #ffe9b3; font-size: 9px; }
+
+/* Heatmap */
+.tp-heatgrid {
+  display: grid;
+  gap: 2px;
+  padding: 2px;
+}
+
+.tp-heat-cell {
+  border-radius: 3px;
+  transition: background 0.6s ease;
+}
+
+.tp-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tp-heatmap-legend span { font-size: 11px; color: #888; font-weight: bold; }
+
+.tp-heatmap-legend-bar {
+  width: 140px;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(to right, #006eff, #ffb400, #ff3c00);
+  border: 1px solid #ddd;
+}
+
+/* ── Momentum Detection ────────────────────────────────── */
+.tp-momentum-current {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tp-momentum-current span { color: #666; font-size: 13px; font-weight: bold; }
+.tp-momentum-current strong { font-size: 28px; }
+.tp-momentum-current em { color: #888; font-style: normal; font-size: 12.5px; }
+
+.tp-momentum-chart {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 160px;
+  padding-top: 4px;
+}
+
+.tp-momentum-zero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #ddd;
+}
+
+.tp-momentum-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.tp-momentum-bar-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.tp-momentum-bar {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  border-radius: 4px;
+  transition: height 0.6s ease, background 0.6s ease;
+}
+
+.tp-momentum-minute {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #999;
+  font-weight: bold;
+}
+
+/* ── Chat quick-suggestion chips ───────────────────────── */
+.tp-chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0 0;
+}
+
+.tp-chat-suggestion-chip {
+  border: 1px solid #e8d3a2;
+  background: #fdf8ee;
+  color: #7e0101;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 5px 11px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.tp-chat-suggestion-chip:hover { background: #f5e8d0; border-color: #b89b5e; }
+
+.tp-footer { text-align: center; color: #999; font-size: 12px; padding: 16px; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .tp-field-layout { grid-template-columns: 1fr 260px; }
+}
+
+@media (max-width: 1050px) {
+  .tp-sub-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+  .tp-field-layout { grid-template-columns: 1fr; align-items: start; }
+  .tp-fr-chat { height: 320px; }
+}
+
+@media (max-width: 700px) {
+  .tp-sidebar { position: static; width: 100%; height: auto; }
+  .tp-main { margin-left: 0; padding: 20px; }
+  .tp-layout { flex-direction: column; }
+  .tp-chat-input { flex-direction: column; }
+  .tp-sub-grid { grid-template-columns: 1fr; }
+  .tp-network-node img { width: 32px; height: 32px; }
+  .tp-momentum-chart { height: 120px; }
+}

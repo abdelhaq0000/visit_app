@@ -33,24 +33,40 @@
   margin: 10px 0 4px;
 }
 
+/* ── Group (rail button + flyout) ─────────────────────── */
+.app-nav-group {
+  width: 100%;
+  position: relative;
+}
+
 .app-nav-link {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 11px 4px 9px;
+  padding: 12px 4px 10px;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.38);
   border-left: 3px solid transparent;
   transition: background 0.15s, color 0.15s;
   gap: 4px;
   cursor: pointer;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
 }
 
 .app-nav-link:hover {
   background: rgba(255, 255, 255, 0.055);
   color: rgba(255, 255, 255, 0.8);
+}
+
+.app-nav-link.open {
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .app-nav-link.active {
@@ -66,6 +82,70 @@
   font-weight: bold;
   font-family: Georgia, "Times New Roman", serif;
   line-height: 1;
+}
+
+/* ── Flyout submenu ───────────────────────────────────── */
+.app-nav-flyout {
+  position: absolute;
+  top: 0;
+  left: var(--app-w);
+  min-width: 208px;
+  background: #240202;
+  border: 1px solid rgba(184, 155, 94, 0.28);
+  border-left: 3px solid #b89b5e;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 8px 8px 26px rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  z-index: 500;
+  animation: app-flyout-in 0.14s ease-out;
+}
+
+@keyframes app-flyout-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.app-flyout-title {
+  color: #b89b5e;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 6px 10px 8px;
+  border-bottom: 1px solid rgba(184, 155, 94, 0.18);
+  margin-bottom: 4px;
+}
+
+.app-flyout-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.14s, color 0.14s;
+}
+
+.app-flyout-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.app-flyout-link.active {
+  background: rgba(184, 155, 94, 0.16);
+  color: #e7cf9c;
+}
+
+.app-flyout-ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 @media (max-width: 640px) {

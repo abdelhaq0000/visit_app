@@ -400,12 +400,15 @@
   object-fit: contain;
 }
 
-/* Right column: two stacked panels */
+/* Right column: two stacked panels.
+   Fixed height so the chat panel is bounded and its message list scrolls
+   internally instead of growing the whole row with each new message. */
 .pp-field-right {
   display: flex;
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+  height: clamp(460px, 60vh, 680px);
 }
 
 .pp-fr-panel {
@@ -416,6 +419,8 @@
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  min-width: 0;
 }
 
 /* Alerts panel — auto height */

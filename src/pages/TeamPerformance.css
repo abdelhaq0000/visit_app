@@ -311,7 +311,13 @@
   min-height: 0;
 }
 
-.tp-fr-chat { min-height: 0; overflow: hidden; }
+/* Cap the chat panel so its message list scrolls internally instead of
+   growing the whole row. The pitch keeps its aspect ratio alongside. */
+.tp-fr-chat {
+  min-height: 0;
+  overflow: hidden;
+  height: clamp(420px, 52vh, 620px);
+}
 
 .tp-fr-title {
   display: flex;

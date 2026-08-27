@@ -6,7 +6,7 @@ import { getAllSessions, deleteSession } from '../data/history'
 import './History.css'
 
 const TEAMS = [
-  { key: 'us', label: 'Morocco', roster: players },
+  { key: 'us', label: 'Maroc', roster: players },
   { key: 'opponent', label: 'France', roster: opponentPlayers },
 ]
 
@@ -127,7 +127,7 @@ export default function History() {
     ?? activeTeam.roster.find((p) => p.name === selectedPlayerName)
 
   function handleDeleteSession(id) {
-    if (!confirm('Delete this session from history?')) return
+    if (!confirm('Supprimer cette session de l’historique ?')) return
     deleteSession(id)
     setSessions(getAllSessions())
     setOpenSessionId(null)
@@ -135,7 +135,7 @@ export default function History() {
 
   return (
     <div className="hist-page">
-      <Navbar title="Player History &amp; Reports" />
+      <Navbar title="Historique &amp; Rapports Joueur" />
 
       <div className="hist-content">
         {!selectedPlayerName ? (
@@ -152,7 +152,7 @@ export default function History() {
                 </button>
               ))}
             </div>
-            <div className="hist-grid-label">{activeTeam.label} — Select a player to view history</div>
+            <div className="hist-grid-label">{activeTeam.label} — Choisir un joueur pour voir l’historique</div>
 
             <div className="hist-picker-grid">
               {activeTeam.roster.map((p) => {
@@ -173,7 +173,7 @@ export default function History() {
         ) : (
           <div className="hist-wrap">
             <button type="button" className="hist-back-btn" onClick={() => { setSelectedPlayerName(null); setOpenSessionId(null) }}>
-              &#8592; All players
+              &#8592; Tous les joueurs
             </button>
 
             <div className="hist-player-head">
@@ -186,14 +186,14 @@ export default function History() {
               <div>
                 <div className="hist-player-name">{selectedPlayerName}</div>
                 <div className="hist-player-meta">
-                  {selectedPlayer?.position} · {selectedPlayer?.club} · {selectedSessions.length} session{selectedSessions.length === 1 ? '' : 's'} recorded
+                  {selectedPlayer?.position} · {selectedPlayer?.club} · {selectedSessions.length} session{selectedSessions.length === 1 ? '' : 's'} enregistrée{selectedSessions.length === 1 ? '' : 's'}
                 </div>
               </div>
             </div>
 
             {selectedSessions.length === 0 ? (
               <div className="hist-empty">
-                No sessions yet for {selectedPlayerName}. Tag actions in Tagger or capture wearable data in Player Performance, then save.
+                Aucune session pour {selectedPlayerName}. Taguez des actions dans le Tagger ou capturez des données capteur dans Performance Joueur, puis enregistrez.
               </div>
             ) : (
               <div className="hist-session-list">
@@ -210,22 +210,22 @@ export default function History() {
                             <span className="hist-stat">{s.sessionStats?.maxSpeed} km/h max</span>
                             <span className="hist-stat">{s.sessionStats?.dist} km</span>
                             <span className="hist-stat">{s.sessionStats?.temp}°C</span>
-                            <span className="hist-stat">{s.alertsLog?.length || 0} alerts</span>
+                            <span className="hist-stat">{s.alertsLog?.length || 0} alerte(s)</span>
                           </div>
                         ) : (
                           <div className="hist-session-stats">
-                            <span className="hist-stat">{s.summary.goals} goals</span>
-                            <span className="hist-stat">{s.summary.assists} assists</span>
-                            <span className="hist-stat">{s.summary.yellowCards} cards</span>
-                            <span className="hist-stat">{s.summary.totalEvents} events</span>
+                            <span className="hist-stat">{s.summary.goals} but(s)</span>
+                            <span className="hist-stat">{s.summary.assists} passe(s) déc.</span>
+                            <span className="hist-stat">{s.summary.yellowCards} carton(s)</span>
+                            <span className="hist-stat">{s.summary.totalEvents} action(s)</span>
                           </div>
                         )}
 
                         <span className={`hist-kind-chip ${isWearable ? 'wearable' : 'tagging'}`}>
-                          {isWearable ? 'Wearable' : 'Tagging'}
+                          {isWearable ? 'Capteur' : 'Tagging'}
                         </span>
                         {!isWearable && (
-                          <span className={`hist-team-chip ${s.teamKey}`}>{s.teamKey === 'opponent' ? 'France' : 'Morocco'}</span>
+                          <span className={`hist-team-chip ${s.teamKey}`}>{s.teamKey === 'opponent' ? 'France' : 'Maroc'}</span>
                         )}
                         <span className="hist-chevron">{open ? '▲' : '▼'}</span>
                       </div>
@@ -233,14 +233,14 @@ export default function History() {
                       {open && isWearable && (
                         <div className="hist-session-detail">
                           <div className="hist-report-grid">
-                            <div className="hist-report-item"><span>Max speed</span><strong>{s.sessionStats?.maxSpeed} km/h</strong></div>
+                            <div className="hist-report-item"><span>Vitesse max</span><strong>{s.sessionStats?.maxSpeed} km/h</strong></div>
                             <div className="hist-report-item"><span>Distance</span><strong>{s.sessionStats?.dist} km</strong></div>
-                            <div className="hist-report-item"><span>Temperature</span><strong>{s.sessionStats?.temp} °C</strong></div>
+                            <div className="hist-report-item"><span>Température</span><strong>{s.sessionStats?.temp} °C</strong></div>
                             <div className="hist-report-item"><span>Satellites</span><strong>{s.sessionStats?.sats}</strong></div>
-                            <div className="hist-report-item"><span>Own half</span><strong>{s.zoneStats?.ownHalf}</strong></div>
-                            <div className="hist-report-item"><span>Midfield</span><strong>{s.zoneStats?.midfield}</strong></div>
-                            <div className="hist-report-item"><span>Opp half</span><strong>{s.zoneStats?.oppHalf}</strong></div>
-                            <div className="hist-report-item"><span>Tagged actions</span><strong>{s.tagHistory?.length || 0}</strong></div>
+                            <div className="hist-report-item"><span>Camp propre</span><strong>{s.zoneStats?.ownHalf}</strong></div>
+                            <div className="hist-report-item"><span>Milieu</span><strong>{s.zoneStats?.midfield}</strong></div>
+                            <div className="hist-report-item"><span>Camp adverse</span><strong>{s.zoneStats?.oppHalf}</strong></div>
+                            <div className="hist-report-item"><span>Actions taguées</span><strong>{s.tagHistory?.length || 0}</strong></div>
                           </div>
 
                           <div className="hist-wearable-grid">
@@ -251,18 +251,18 @@ export default function History() {
                               </div>
                             </div>
                             <div className="hist-wearable-block">
-                              <div className="hist-block-title">Acceleration (m/s²)</div>
+                              <div className="hist-block-title">Accélération (m/s²)</div>
                               <div className="hist-chart-wrap">
                                 {s.accHistory?.length ? (
                                   <HistoryAccChart accHistory={s.accHistory} />
                                 ) : (
-                                  <div className="hist-empty-mini">No acceleration data captured.</div>
+                                  <div className="hist-empty-mini">Aucune donnée d’accélération captée.</div>
                                 )}
                               </div>
                             </div>
                           </div>
 
-                          <div className="hist-block-title">Alerts during session</div>
+                          <div className="hist-block-title">Alertes pendant la session</div>
                           {s.alertsLog?.length ? (
                             <div className="hist-alerts-list">
                               {s.alertsLog.map((a, i) => (
@@ -272,11 +272,11 @@ export default function History() {
                               ))}
                             </div>
                           ) : (
-                            <div className="hist-empty-mini">No alerts recorded.</div>
+                            <div className="hist-empty-mini">Aucune alerte enregistrée.</div>
                           )}
 
                           <button type="button" className="hist-delete-btn" onClick={() => handleDeleteSession(s.id)}>
-                            Delete this session
+                            Supprimer cette session
                           </button>
                         </div>
                       )}
@@ -294,7 +294,7 @@ export default function History() {
 
                           <table className="hist-event-table">
                             <thead>
-                              <tr><th>Time</th><th>Action</th></tr>
+                              <tr><th>Heure</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                               {s.events.map((e) => (
@@ -307,7 +307,7 @@ export default function History() {
                           </table>
 
                           <button type="button" className="hist-delete-btn" onClick={() => handleDeleteSession(s.id)}>
-                            Delete this session
+                            Supprimer cette session
                           </button>
                         </div>
                       )}

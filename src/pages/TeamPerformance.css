@@ -261,35 +261,46 @@
   padding: 6px 12px;
 }
 
-/* ── Live field section — pitch (left) + chatbot (right) ── */
+/* ── Section Terrain + Chat — même présentation que « Formation & Composition » de MatchSetup ── */
+.tp-field-section {
+  background: #fff;
+  border-radius: 16px;
+  border: 2px solid #e8e0d0;
+  padding: 24px 28px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
 .tp-field-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8d8b8;
 }
 
-.tp-field-section-title { color: #3d0000; font-size: 15px; font-weight: bold; margin: 0; }
+.tp-field-section-title { color: #3d0000; font-size: 17px; font-weight: bold; margin: 0; }
 
 .tp-field-legend { display: flex; gap: 14px; }
 .tp-field-legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #777; font-weight: bold; }
 .tp-field-legend i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
 
+/* Grille identique à MatchSetup : terrain fixe ~560px à gauche, panneau à droite */
 .tp-field-layout {
   display: grid;
-  grid-template-columns: 1fr 288px;
-  gap: 16px;
-  align-items: stretch;
+  grid-template-columns: 560px 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
 .tp-field-canvas-wrap {
   background: #1a3d1a;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   border: 2px solid #2d6a2d;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   aspect-ratio: 840 / 543;
 }
 
@@ -301,22 +312,21 @@
 }
 
 .tp-fr-panel {
-  background: #fff;
-  border: 2px solid #b89b5e;
-  border-radius: 14px;
+  background: #faf8f5;
+  border: 1.5px solid #e0d0b0;
+  border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* Cap the chat panel so its message list scrolls internally instead of
-   growing the whole row. The pitch keeps its aspect ratio alongside. */
+/* Le panneau chat est borné pour que la liste des messages défile en interne */
 .tp-fr-chat {
   min-height: 0;
   overflow: hidden;
-  height: clamp(420px, 52vh, 620px);
+  height: clamp(420px, 52vh, 560px);
 }
 
 .tp-fr-title {
@@ -328,7 +338,7 @@
   color: #3d0000;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #b89b5e;
+  border-bottom: 1.5px solid #e0d0b0;
   flex-shrink: 0;
 }
 
@@ -438,8 +448,9 @@
 .tp-footer { text-align: center; color: #999; font-size: 12px; padding: 16px; }
 
 /* ── Responsive ─────────────────────────────────────────── */
-@media (max-width: 1150px) {
-  .tp-field-layout { grid-template-columns: 1fr 260px; }
+@media (max-width: 1200px) {
+  .tp-field-layout { grid-template-columns: 1fr; }
+  .tp-field-canvas-wrap { max-width: 560px; }
 }
 
 @media (max-width: 1050px) {
@@ -460,8 +471,8 @@
 }
 
 @media (max-width: 900px) {
-  .tp-field-layout { grid-template-columns: 1fr; align-items: start; }
-  .tp-fr-chat { height: 340px; }
+  .tp-field-section { padding: 18px 16px; }
+  .tp-fr-chat { height: 360px; }
   .tp-headline { flex-wrap: wrap; }
   .tp-headline-btn { width: 100%; }
 }

@@ -340,18 +340,25 @@
   font-family: inherit;
 }
 
-/* ── Field & Heatmap section ───────────────────────────── */
+/* ── Section Terrain + Heatmap — même présentation que « Formation & Composition » de MatchSetup ── */
 .pp-field-section {
+  background: #fff;
+  border-radius: 16px;
+  border: 2px solid #e8e0d0;
+  padding: 24px 28px;
   margin-bottom: 22px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
 }
 
 .pp-field-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8d8b8;
 }
 
 .pp-field-legend {
@@ -375,21 +382,21 @@
   font-weight: bold;
 }
 
-/* Grid: field left | right column */
+/* Grille identique à MatchSetup : terrain fixe ~560px à gauche, colonne à droite */
 .pp-field-layout {
   display: grid;
-  grid-template-columns: 1fr 288px;
-  gap: 16px;
-  align-items: stretch;
+  grid-template-columns: 560px 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
-/* Canvas wrapper — left column */
+/* Terrain — colonne de gauche */
 .pp-field-canvas-wrap {
   background: #1a3d1a;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   border: 2px solid #2d6a2d;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   aspect-ratio: 840 / 543;
 }
 
@@ -412,11 +419,11 @@
 }
 
 .pp-fr-panel {
-  background: #fff;
-  border: 2px solid #b89b5e;
-  border-radius: 14px;
+  background: #faf8f5;
+  border: 1.5px solid #e0d0b0;
+  border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -444,7 +451,7 @@
   color: #3d0000;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #b89b5e;
+  border-bottom: 1.5px solid #e0d0b0;
   flex-shrink: 0;
 }
 
@@ -617,13 +624,13 @@
 .pp-chat-send:hover { background: #600000; }
 
 /* Responsive */
-@media (max-width: 1100px) {
-  .pp-field-layout { grid-template-columns: 1fr 260px; }
+@media (max-width: 1200px) {
+  .pp-field-layout { grid-template-columns: 1fr; }
+  .pp-field-canvas-wrap { max-width: 560px; }
 }
 
 @media (max-width: 900px) {
-  .pp-field-layout { grid-template-columns: 1fr; align-items: start; }
-  .pp-field-canvas-wrap { aspect-ratio: 840 / 543; }
+  .pp-field-section { padding: 18px 16px; }
   .pp-field-right { height: auto; flex-direction: row; }
   .pp-fr-alerts { flex: 0 0 48%; }
   .pp-fr-chat   { flex: 1; height: 340px; }

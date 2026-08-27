@@ -87,16 +87,16 @@ const icons = {
   ),
 }
 
-// ── Grouped navigation: Coach · Tagger · Settings ────────
+// ── Navigation groupée : Coach · Tagger · Paramètres ─────
 const GROUPS = [
   {
     key: 'coach',
     label: 'Coach',
     icon: icons.whistle,
     children: [
-      { to: '/', label: 'Home', icon: icons.home, end: true },
-      { to: '/players', label: 'Player Performance', icon: icons.player },
-      { to: '/team', label: 'Team Performance', icon: icons.team },
+      { to: '/', label: 'Accueil', icon: icons.home, end: true },
+      { to: '/players', label: 'Performance Joueur', icon: icons.player },
+      { to: '/team', label: 'Performance Équipe', icon: icons.team },
     ],
   },
   {
@@ -104,19 +104,19 @@ const GROUPS = [
     label: 'Tagger',
     icon: icons.tag,
     children: [
-      { to: '/tagger', label: 'Action Tagger', icon: icons.tag },
-      { to: '/add-player', label: 'Add Player', icon: icons.addPlayer },
+      { to: '/tagger', label: 'Tagger d’Actions', icon: icons.tag },
+      { to: '/add-player', label: 'Ajouter un Joueur', icon: icons.addPlayer },
     ],
   },
   {
     key: 'settings',
-    label: 'Settings',
+    label: 'Paramètres',
     icon: icons.gear,
     children: [
-      { to: '/match-setup', label: 'Match Setup', icon: icons.calendar },
-      { to: '/history', label: 'Match History', icon: icons.history },
-      { to: '/expert-system', label: 'Expert System', icon: icons.brain },
-      { to: '/ai-config', label: 'AI Configuration', icon: icons.robot },
+      { to: '/match-setup', label: 'Paramètres du Match', icon: icons.calendar },
+      { to: '/history', label: 'Historique des Matchs', icon: icons.history },
+      { to: '/expert-system', label: 'Système Expert', icon: icons.brain },
+      { to: '/ai-config', label: 'Configuration IA', icon: icons.robot },
     ],
   },
 ]

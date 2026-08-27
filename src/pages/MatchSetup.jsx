@@ -161,10 +161,6 @@ function MatchSidebar({ matchInfo, formationKey, assignments, corners, onSave, o
         <div className="ms-sb-info-item"><span>Date</span><span>{dateStr}</span></div>
         <div className="ms-sb-info-item"><span>Heure</span><span>{timeStr}</span></div>
         <div className="ms-sb-info-item"><span>Stade</span><span>{matchInfo.venue || '—'}</span></div>
-        <div className="ms-sb-info-item"><span>Durée</span><span>{matchInfo.duration} min</span></div>
-        {matchInfo.referee && (
-          <div className="ms-sb-info-item"><span>Arbitre</span><span>{matchInfo.referee}</span></div>
-        )}
       </div>
 
       <div className="ms-sb-divider" />
@@ -331,70 +327,11 @@ export default function MatchSetup() {
     opponent: '',
     date: new Date().toISOString().slice(0, 16),
     venue: '',
-    referee: '',
-    duration: '90',
-    halfTime: '45',
   })
 
   const [corners, setCorners]         = useState(EMPTY_CORNERS)
   const [formationKey, setFormationKey] = useState('4-3-3')
   const [assignments, setAssignments]   = useState(() => autoAssign('4-3-3'))
-  const [advOpen, setAdvOpen]           = useState(false)
-  const [params, setParams]             = useState({
-    gpsSampleHz: '1',
-    speedAlertKmh: '26',
-    fatigueDistKm: '8',
-    recordingInterval: '1500',
-  })
-
-  // Expert system rules
-  const [expertRules, setExpertRules] = useState([])
-  const [newRule, setNewRule] = useState({
-    metric: 'vitesse', op: '>', value: '', action: 'alerte_rouge',
-  })
-
-  function addExpertRule() {
-    if (!newRule.value) return
-    setExpertRules(prev => [...prev, { ...newRule, id: Date.now() }])
-    setNewRule(r => ({ ...r, value: '' }))
-  }
-
-  function deleteExpertRule(id) {
-    setExpertRules(prev => prev.filter(r => r.id !== id))
-  }
-
-  const METRICS = [
-    { value: 'vitesse',       label: 'Vitesse',          unit: 'km/h' },
-    { value: 'acceleration',  label: 'Accélération',     unit: 'm/s²' },
-    { value: 'distance',      label: 'Distance parcourue', unit: 'km' },
-    { value: 'temperature',   label: 'Température',      unit: '°C'   },
-    { value: 'freq_cardiaque',label: 'Fréq. Cardiaque',  unit: 'bpm'  },
-    { value: 'sprint_duree',  label: 'Durée Sprint',     unit: 's'    },
-    { value: 'zone',          label: 'Zone du terrain',  unit: ''     },
-  ]
-
-  const OPERATORS = [
-    { value: '>',  label: '>' },
-    { value: '>=', label: '>=' },
-    { value: '<',  label: '<' },
-    { value: '<=', label: '<=' },
-    { value: '=',  label: '=' },
-    { value: '!=', label: '≠' },
-  ]
-
-  const ACTIONS = [
-    { value: 'alerte_rouge',   label: 'Alerte Rouge',          cls: 'act-red'    },
-    { value: 'alerte_orange',  label: 'Alerte Orange',         cls: 'act-orange' },
-    { value: 'alerte_jaune',   label: 'Alerte Jaune',          cls: 'act-yellow' },
-    { value: 'notification',   label: 'Notification',          cls: 'act-info'   },
-    { value: 'pause',          label: 'Recommander Pause',     cls: 'act-pause'  },
-  ]
-
-  function ruleLabel(rule) {
-    const m = METRICS.find(x => x.value === rule.metric)
-    const a = ACTIONS.find(x => x.value === rule.action)
-    return `${m?.label ?? rule.metric} ${rule.op} ${rule.value}${m?.unit ? ' ' + m.unit : ''}`
-  }
 
   useEffect(() => { setAssignments(autoAssign(formationKey)) }, [formationKey])
 
@@ -407,7 +344,7 @@ export default function MatchSetup() {
   }
 
   function handleSave() {
-    localStorage.setItem('matchConfig', JSON.stringify({ matchInfo, corners, formation: formationKey, assignments, params, expertRules, savedAt: new Date().toISOString() }))
+    localStorage.setItem('matchConfig', JSON.stringify({ matchInfo, corners, formation: formationKey, assignments, savedAt: new Date().toISOString() }))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -457,28 +394,6 @@ export default function MatchSetup() {
               <div className="ms-field">
                 <label>Stade / Lieu</label>
                 <input value={matchInfo.venue} onChange={e => setMatchInfo(p => ({ ...p, venue: e.target.value }))} placeholder="ex. Stade Mohammed V" />
-              </div>
-              <div className="ms-field">
-                <label>Arbitre</label>
-                <input value={matchInfo.referee} onChange={e => setMatchInfo(p => ({ ...p, referee: e.target.value }))} placeholder="Nom de l'arbitre (optionnel)" />
-              </div>
-              <div className="ms-field ms-field-row">
-                <div className="ms-subfield">
-                  <label>Durée totale</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="60" max="120" value={matchInfo.duration}
-                      onChange={e => setMatchInfo(p => ({ ...p, duration: e.target.value }))} />
-                    <span>min</span>
-                  </div>
-                </div>
-                <div className="ms-subfield">
-                  <label>Mi-temps</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="30" max="60" value={matchInfo.halfTime}
-                      onChange={e => setMatchInfo(p => ({ ...p, halfTime: e.target.value }))} />
-                    <span>min</span>
-                  </div>
-                </div>
               </div>
             </div>
           </section>
@@ -589,116 +504,6 @@ export default function MatchSetup() {
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* Section 4: Advanced Params */}
-          <section className="ms-section ms-section-adv">
-            <button className="ms-adv-toggle" onClick={() => setAdvOpen(v => !v)}>
-              <span>Paramètres Avancés des Capteurs</span>
-              <span className={`ms-adv-arrow${advOpen ? ' open' : ''}`}>▼</span>
-            </button>
-            {advOpen && (
-              <>
-              <div className="ms-adv-grid">
-                <div className="ms-field">
-                  <label>Fréquence GPS</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="1" max="10" value={params.gpsSampleHz}
-                      onChange={e => setParams(p => ({ ...p, gpsSampleHz: e.target.value }))} />
-                    <span>Hz</span>
-                  </div>
-                  <span className="ms-field-hint">Fréquence d'échantillonnage du module GPS</span>
-                </div>
-                <div className="ms-field">
-                  <label>Seuil alerte vitesse</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="10" max="40" value={params.speedAlertKmh}
-                      onChange={e => setParams(p => ({ ...p, speedAlertKmh: e.target.value }))} />
-                    <span>km/h</span>
-                  </div>
-                  <span className="ms-field-hint">Déclenche une alerte au-delà de ce seuil</span>
-                </div>
-                <div className="ms-field">
-                  <label>Seuil fatigue</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="2" max="15" value={params.fatigueDistKm}
-                      onChange={e => setParams(p => ({ ...p, fatigueDistKm: e.target.value }))} />
-                    <span>km</span>
-                  </div>
-                  <span className="ms-field-hint">Distance à partir de laquelle surveiller la fatigue</span>
-                </div>
-                <div className="ms-field">
-                  <label>Intervalle enregistrement</label>
-                  <div className="ms-input-unit">
-                    <input type="number" min="500" max="5000" step="100" value={params.recordingInterval}
-                      onChange={e => setParams(p => ({ ...p, recordingInterval: e.target.value }))} />
-                    <span>ms</span>
-                  </div>
-                  <span className="ms-field-hint">Intervalle entre chaque capture de données</span>
-                </div>
-              </div>
-
-              {/* ── Expert System Rules ── */}
-              <div className="ms-expert-section">
-                <div className="ms-expert-title">
-                  Règles du Système Expert
-                  <span className="ms-expert-badge">SI … ALORS</span>
-                </div>
-
-                {/* Rule builder */}
-                <div className="ms-rule-builder">
-                  <div className="ms-rule-col">
-                    <div className="ms-rule-builder-label">Métrique</div>
-                    <select value={newRule.metric} onChange={e => setNewRule(r => ({ ...r, metric: e.target.value }))}>
-                      {METRICS.map(m => <option key={m.value} value={m.value}>{m.label}{m.unit ? ` (${m.unit})` : ''}</option>)}
-                    </select>
-                  </div>
-                  <div className="ms-rule-col">
-                    <div className="ms-rule-builder-label">Opérateur</div>
-                    <select value={newRule.op} onChange={e => setNewRule(r => ({ ...r, op: e.target.value }))}>
-                      {OPERATORS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </div>
-                  <div className="ms-rule-col">
-                    <div className="ms-rule-builder-label">Valeur</div>
-                    <input type={newRule.metric === 'zone' ? 'text' : 'number'}
-                      placeholder={newRule.metric === 'zone' ? 'defense...' : '0'}
-                      value={newRule.value}
-                      onChange={e => setNewRule(r => ({ ...r, value: e.target.value }))}
-                      onKeyDown={e => e.key === 'Enter' && addExpertRule()}
-                    />
-                  </div>
-                  <div className="ms-rule-col">
-                    <div className="ms-rule-builder-label">Action</div>
-                    <select value={newRule.action} onChange={e => setNewRule(r => ({ ...r, action: e.target.value }))}>
-                      {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                    </select>
-                  </div>
-                  <button className="ms-rule-add-btn" onClick={addExpertRule}>+ Ajouter</button>
-                </div>
-
-                {/* Rules list */}
-                <div className="ms-rules-list">
-                  {expertRules.length === 0
-                    ? <div className="ms-rules-empty">Aucune règle définie. Ajoutez des règles pour personnaliser le comportement du système expert.</div>
-                    : expertRules.map((rule, i) => {
-                        const act = ACTIONS.find(a => a.value === rule.action)
-                        return (
-                          <div key={rule.id} className="ms-rule-item">
-                            <span className="ms-rule-num">{i + 1}</span>
-                            <span className="ms-rule-if">SI</span>
-                            <span className="ms-rule-cond">{ruleLabel(rule)}</span>
-                            <span className={`ms-rule-then ${act?.cls ?? ''}`}>ALORS</span>
-                            <span className="ms-rule-action-label">{act?.label ?? rule.action}</span>
-                            <button className="ms-rule-del-btn" onClick={() => deleteExpertRule(rule.id)} title="Supprimer">×</button>
-                          </div>
-                        )
-                      })
-                  }
-                </div>
-              </div>
-              </>
-            )}
           </section>
 
         </main>

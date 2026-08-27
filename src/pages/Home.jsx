@@ -4,8 +4,8 @@ export default function Home() {
   return (
     <div className="home-page">
       <nav className="home-navbar">
-        <div className="home-nav-title">Home</div>
-      
+        <div className="home-nav-title">Accueil</div>
+
       </nav>
 
       <main className="home-hero">
@@ -13,24 +13,25 @@ export default function Home() {
           <img
             className="home-hero-image"
             src="https://www.atalayar.com/media/atalayar/images/2023/12/26/2023122611072180693.jpg"
-            alt="2030 World Cup presentation"
+            alt="Présentation de la Coupe du Monde 2030"
           />
           <div className="home-hero-copy">
             <p>
-              The 2030 FIFA World Cup is set to be a historic event, marking the centenary of the
-              first World Cup held in 1930. This tournament will bring together the best national
-              teams from around the globe to compete for the prestigious title.
+              La Coupe du Monde de la FIFA 2030 s'annonce comme un événement historique, marquant le
+              centenaire de la première Coupe du Monde disputée en 1930. Ce tournoi réunira les
+              meilleures équipes nationales du monde entier pour se disputer ce titre prestigieux.
             </p>
             <p>
-              Fans are eagerly anticipating the excitement, drama, and unforgettable moments that
-              the World Cup always delivers. With advanced technology and state-of-the-art stadiums,
-              the 2030 World Cup promises to be a spectacular celebration of football.
+              Les supporters attendent avec impatience l'excitation, l'intensité et les moments
+              inoubliables que la Coupe du Monde offre toujours. Avec une technologie de pointe et
+              des stades ultramodernes, la Coupe du Monde 2030 promet d'être une célébration
+              spectaculaire du football.
             </p>
             <p>
-              In addition to thrilling matches, the tournament will feature cultural events, fan
-              zones, and interactive experiences for attendees. This will provide an opportunity for
-              fans to immerse themselves in football culture and connect with supporters from around
-              the world.
+              Au-delà des matchs palpitants, le tournoi proposera des événements culturels, des fan
+              zones et des expériences interactives pour les visiteurs. L'occasion pour les
+              supporters de s'immerger dans la culture du football et d'échanger avec des passionnés
+              du monde entier.
             </p>
           </div>
         </section>

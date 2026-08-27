@@ -124,7 +124,7 @@ export default function AddPlayer() {
                   </div>
                   <div className="ap-field">
                     <label>Poste *</label>
-                    <input value={form.position} onChange={e => setField('position', e.target.value)} placeholder="ex. Right Back" />
+                    <input value={form.position} onChange={e => setField('position', e.target.value)} placeholder="ex. Arrière droit" />
                   </div>
                   <div className="ap-field-row">
                     <div className="ap-subfield">
@@ -139,11 +139,11 @@ export default function AddPlayer() {
                   <div className="ap-field-row">
                     <div className="ap-subfield">
                       <label>Nationalité</label>
-                      <input value={form.nationality} onChange={e => setField('nationality', e.target.value)} placeholder="ex. Morocco" />
+                      <input value={form.nationality} onChange={e => setField('nationality', e.target.value)} placeholder="ex. Maroc" />
                     </div>
                     <div className="ap-subfield">
                       <label>Âge</label>
-                      <input value={form.age} onChange={e => setField('age', e.target.value)} placeholder="ex. 25 yrs" />
+                      <input value={form.age} onChange={e => setField('age', e.target.value)} placeholder="ex. 25 ans" />
                     </div>
                   </div>
                   <div className="ap-field-row">

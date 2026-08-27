@@ -422,7 +422,7 @@ function getAIResponse(input, { sensor, currentFieldPos, zoneStats, activeAlerts
   if (/temp|chaleur|thermique/.test(msg)) {
     return `Température capteur: ${temp.toFixed(1)}°C. ${temp > 30 ? '⚠️ Température élevée!' : '✅ Normale.'}`
   }
-  if (/performance|bilan|analyse|rapport/.test(msg)) {
+  if (/performance|bilan|rapport/.test(msg)) {
     const dom = pOpp > pOwn && pOpp > pMid ? 'camp adverse' : pOwn > pMid ? 'camp propre' : 'milieu'
     return `Bilan ${player.name}: max ${sessionStats.maxSpeed} km/h, ${sessionStats.dist} km, ${player.position}. Zone dominante: ${dom}. ${activeAlerts.length > 0 ? activeAlerts.length + ' alerte(s).' : 'Aucune alerte.'}`
   }
@@ -451,7 +451,7 @@ function getAIResponse(input, { sensor, currentFieldPos, zoneStats, activeAlerts
     if (recs.length === 0) recs.push('Maintenir le rythme actuel', 'Conserver la position tactique')
     return `Recommandations pour ${player.name}: ${recs.join(' | ')}.`
   }
-  if (/insight|analyse.*zone|profil|tactiq/.test(msg)) {
+  if (/insight|analyse|profil|tactiq/.test(msg)) {
     const { insights } = buildPositionInsights({ zoneStats, tagHistory, player, activeAlerts })
     return `Analyse tactique de ${player.name}: ${insights.map(i => i.text).join(' | ')}`
   }
@@ -717,7 +717,7 @@ export default function PlayerPerformance() {
 
   function handleSaveSession() {
     if (!accHistory.length && !fieldPositions.length) {
-      alert('No wearable data captured yet — connect the tracker and wait for readings.')
+      alert('Aucune donnée capteur encore captée — connectez le tracker et attendez les relevés.')
       return
     }
     saveWearableSession({
@@ -758,14 +758,14 @@ export default function PlayerPerformance() {
   return (
     <div className="pp-page">
       <Navbar
-        title="Player Performance"
-        right={<button type="button" className="pp-save-session-btn" onClick={handleSaveSession}>&#128190; Save Session</button>}
+        title="Performance du Joueur"
+        right={<button type="button" className="pp-save-session-btn" onClick={handleSaveSession}>&#128190; Enregistrer la session</button>}
       />
 
       {pickerOpen && (
         <div className="pp-picker-overlay" onClick={e => e.target === e.currentTarget && setPickerOpen(false)}>
           <div className="pp-picker-modal">
-            <h2>Select a Player</h2>
+            <h2>Choisir un joueur</h2>
             <div className="pp-picker-grid">
               {players.map((p, i) => (
                 <div
@@ -780,7 +780,7 @@ export default function PlayerPerformance() {
                 </div>
               ))}
             </div>
-            <button className="pp-picker-close" onClick={() => setPickerOpen(false)}>Close</button>
+            <button className="pp-picker-close" onClick={() => setPickerOpen(false)}>Fermer</button>
           </div>
         </div>
       )}
@@ -797,7 +797,7 @@ export default function PlayerPerformance() {
         />
 
         <main className="pp-main">
-          <h2 className="pp-section-title">Real-Time Sensor Data</h2>
+          <h2 className="pp-section-title">Données Capteur en Temps Réel</h2>
 
           <div className="pp-broker-panel">
             <div className={`pp-broker-status pp-broker-status-${mqttStatus}`}>
@@ -810,53 +810,53 @@ export default function PlayerPerformance() {
           </div>
 
           <div className="pp-status-box">
-            <div className="pp-status-item">GPS Status: <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatus === 'connected' ? 'Connected' : 'Waiting'}</span></div>
-            <div className="pp-status-item">MPU6050 Status: <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatus === 'connected' ? 'Connected' : 'Waiting'}</span></div>
-            <div className="pp-status-item">Broker: <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatusText}</span></div>
-            <div className="pp-status-item">Last Update: <span className="ok">{lastUpdate}</span></div>
+            <div className="pp-status-item">État GPS : <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatus === 'connected' ? 'Connecté' : 'En attente'}</span></div>
+            <div className="pp-status-item">État MPU6050 : <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatus === 'connected' ? 'Connecté' : 'En attente'}</span></div>
+            <div className="pp-status-item">Broker : <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatusText}</span></div>
+            <div className="pp-status-item">Dernière mise à jour : <span className="ok">{lastUpdate}</span></div>
           </div>
 
           <section className="pp-cards">
             <div className="pp-card">
-              <h3>GPS Speed</h3>
+              <h3>Vitesse GPS</h3>
               <h2>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'}</h2>
               <p>km/h</p>
             </div>
             <div className="pp-card">
               <h3>Altitude</h3>
               <h2>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'}</h2>
-              <p>meters</p>
+              <p>mètres</p>
             </div>
             <div className="pp-card">
               <h3>Satellites</h3>
               <h2>{sensor ? sensor.gps.satellites : '0'}</h2>
-              <p>GPS signal quality</p>
+              <p>qualité du signal GPS</p>
             </div>
             <div className="pp-card">
-              <h3>Movement Intensity</h3>
+              <h3>Intensité du mouvement</h3>
               <h2>{movement.toFixed(2)}</h2>
-              <p>acceleration magnitude</p>
+              <p>magnitude d'accélération</p>
             </div>
           </section>
 
           <section className="pp-wide-section">
             <div className="pp-panel">
-              <h3>GPS Data</h3>
+              <h3>Données GPS</h3>
               <div className="pp-data-line"><span>Latitude</span><strong>{sensor ? sensor.gps.lat.toFixed(6) : '0.000000'}</strong></div>
               <div className="pp-data-line"><span>Longitude</span><strong>{sensor ? sensor.gps.lng.toFixed(6) : '0.000000'}</strong></div>
-              <div className="pp-data-line"><span>Speed</span><strong>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'} km/h</strong></div>
+              <div className="pp-data-line"><span>Vitesse</span><strong>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'} km/h</strong></div>
               <div className="pp-data-line"><span>Altitude</span><strong>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'} m</strong></div>
               <div className="pp-data-line"><span>Satellites</span><strong>{sensor ? sensor.gps.satellites : '0'}</strong></div>
             </div>
             <div className="pp-panel">
-              <h3>MPU6050 Data</h3>
-              <div className="pp-data-line"><span>Acceleration X</span><strong>{sensor ? sensor.mpu.accX.toFixed(2) : '0.00'} m/s&#178;</strong></div>
-              <div className="pp-data-line"><span>Acceleration Y</span><strong>{sensor ? sensor.mpu.accY.toFixed(2) : '0.00'} m/s&#178;</strong></div>
-              <div className="pp-data-line"><span>Acceleration Z</span><strong>{sensor ? sensor.mpu.accZ.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+              <h3>Données MPU6050</h3>
+              <div className="pp-data-line"><span>Accélération X</span><strong>{sensor ? sensor.mpu.accX.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+              <div className="pp-data-line"><span>Accélération Y</span><strong>{sensor ? sensor.mpu.accY.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+              <div className="pp-data-line"><span>Accélération Z</span><strong>{sensor ? sensor.mpu.accZ.toFixed(2) : '0.00'} m/s&#178;</strong></div>
               <div className="pp-data-line"><span>Gyroscope X</span><strong>{sensor ? sensor.mpu.gyroX.toFixed(2) : '0.00'} rad/s</strong></div>
               <div className="pp-data-line"><span>Gyroscope Y</span><strong>{sensor ? sensor.mpu.gyroY.toFixed(2) : '0.00'} rad/s</strong></div>
               <div className="pp-data-line"><span>Gyroscope Z</span><strong>{sensor ? sensor.mpu.gyroZ.toFixed(2) : '0.00'} rad/s</strong></div>
-              <div className="pp-data-line"><span>Temperature</span><strong>{sensor ? sensor.mpu.temperature.toFixed(2) : '0.00'} &#176;C</strong></div>
+              <div className="pp-data-line"><span>Température</span><strong>{sensor ? sensor.mpu.temperature.toFixed(2) : '0.00'} &#176;C</strong></div>
             </div>
           </section>
 
@@ -870,7 +870,7 @@ export default function PlayerPerformance() {
             </div>
           </section>
 
-          {/* ── Field + Heatmap + Chat ── */}
+          {/* ── Terrain + Heatmap + Chat ── */}
           <section className="pp-field-section">
             <div className="pp-field-section-header">
               <h2 className="pp-section-title" style={{ marginBottom: 0 }}>
@@ -945,7 +945,7 @@ export default function PlayerPerformance() {
                     ))}
                   </div>
                   <div className="pp-chat-suggestions">
-                    {['Position', 'Zone', 'Actions', 'Insights', 'Recommandations'].map(q => (
+                    {['Position', 'Zone', 'Actions', 'Analyse', 'Recommandations'].map(q => (
                       <button
                         key={q}
                         type="button"
@@ -980,7 +980,7 @@ export default function PlayerPerformance() {
 
           
 
-          <footer className="pp-footer">Football Player Monitoring System</footer>
+          <footer className="pp-footer">Système de Suivi des Joueurs de Football</footer>
         </main>
       </div>
     </div>

@@ -10,11 +10,11 @@ function getJersey(name) {
   return players.find(p => p.name === name)?.jersey ?? ''
 }
 
-// ── Field constants (FIFA dimensions, meters) — same as PlayerPerformance ──
+// ── Constantes terrain (dimensions FIFA, mètres) — identiques à PlayerPerformance ──
 const FW = 105
 const FH = 68
 
-// ── Draw football field on canvas — same rendering as PlayerPerformance ──
+// ── Dessin du terrain sur le canvas — même rendu que PlayerPerformance ──
 function drawField(ctx, cw, ch, sx) {
   const grd = ctx.createLinearGradient(0, 0, cw, 0)
   grd.addColorStop(0, '#195c19')
@@ -45,7 +45,7 @@ function drawField(ctx, cw, ch, sx) {
   ctx.beginPath(); ctx.arc(cw - 11 * sx, ch / 2, 2.5, 0, Math.PI * 2); ctx.fill()
 }
 
-// ── Pitch showing every player + fatigue ring; flagged players pulse ──
+// ── Terrain : chaque joueur + anneau de charge physique ──
 function SquadFatigueCanvas({ squad }) {
   const canvasRef = useRef(null)
 
@@ -63,13 +63,13 @@ function SquadFatigueCanvas({ squad }) {
       const py = (p.y / 100) * ch
       const ring = p.load >= 85 ? '#e23b3b' : p.load >= 70 ? '#e0a300' : '#37b24d'
 
-      // fatigue ring
+      // anneau de charge
       ctx.save()
       ctx.beginPath(); ctx.arc(px, py, 17, -Math.PI / 2, -Math.PI / 2 + (p.load / 100) * Math.PI * 2)
       ctx.strokeStyle = ring; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.stroke()
       ctx.restore()
 
-      // node
+      // pastille joueur
       ctx.save()
       ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2)
       ctx.fillStyle = '#7e0101'; ctx.strokeStyle = '#fdf8ee'; ctx.lineWidth = 2.5
@@ -78,7 +78,7 @@ function SquadFatigueCanvas({ squad }) {
       ctx.fillText(p.jersey || '', px, py + 1)
       ctx.restore()
 
-      // name + load %
+      // nom + charge %
       ctx.save()
       ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'
       ctx.fillStyle = 'rgba(255,255,255,0.95)'
@@ -94,30 +94,29 @@ function SquadFatigueCanvas({ squad }) {
 const TEAM_LOGO =
   'https://upload.wikimedia.org/wikipedia/fr/thumb/6/69/Logo_F%C3%A9d%C3%A9ration_Royale_Marocaine_Football.svg/1920px-Logo_F%C3%A9d%C3%A9ration_Royale_Marocaine_Football.svg.png'
 
-// ── Starting XI on the pitch (percent of pitch) + physical profile ──
-// startLoad = accumulated load at kickoff-view (minute 58); loadRate = load gained per match-minute;
-// capacity = minute the player is expected to hit the danger zone. role drives the replacement suggestion.
+// ── XI de départ sur le terrain (% du terrain) + profil physique ──
+// startLoad = charge cumulée à la minute 58 ; loadRate = charge gagnée par minute de jeu.
 const SQUAD_BASE = [
-  { name: 'Yassine Bounou',      short: 'Bounou',      x: 8,  y: 50, role: 'Goalkeeper',        startLoad: 24, loadRate: 0.15, sub: 'No rotation — backup keeper only if injured.' },
-  { name: 'Achraf Hakimi',       short: 'Hakimi',      x: 26, y: 16, role: 'Right wing-back',   startLoad: 71, loadRate: 0.62, sub: 'Fresh RWB with recovery pace for 1v1 defending.' },
-  { name: 'Noussair Mazraoui',   short: 'Mazraoui',    x: 26, y: 84, role: 'Left-side full-back', startLoad: 55, loadRate: 0.44, sub: 'Like-for-like full-back, keeps the overlap threat.' },
-  { name: 'Bilal El Khannouss',  short: 'El Khannouss', x: 50, y: 34, role: 'Central midfield',  startLoad: 63, loadRate: 0.55, sub: 'Box-to-box mid with legs for late pressing.' },
-  { name: 'Ismail Saibari',      short: 'Saibari',     x: 50, y: 66, role: 'Attacking midfield', startLoad: 66, loadRate: 0.58, sub: 'Creative #10 to keep chance creation alive.' },
-  { name: 'Soufiane Rahimi',     short: 'Rahimi',      x: 78, y: 50, role: 'Striker',            startLoad: 69, loadRate: 0.64, sub: 'Fresh pace striker to run in behind a tiring back line.' },
+  { name: 'Yassine Bounou',      short: 'Bounou',      x: 8,  y: 50, role: 'Gardien',            startLoad: 24, loadRate: 0.15, sub: 'Aucune rotation — gardien remplaçant seulement en cas de blessure.' },
+  { name: 'Achraf Hakimi',       short: 'Hakimi',      x: 26, y: 16, role: 'Arrière droit',      startLoad: 71, loadRate: 0.62, sub: 'Arrière droit frais avec vitesse de récupération pour le 1v1.' },
+  { name: 'Noussair Mazraoui',   short: 'Mazraoui',    x: 26, y: 84, role: 'Arrière latéral',    startLoad: 55, loadRate: 0.44, sub: 'Latéral équivalent, conserve la menace de débordement.' },
+  { name: 'Bilal El Khannouss',  short: 'El Khannouss', x: 50, y: 34, role: 'Milieu central',     startLoad: 63, loadRate: 0.55, sub: 'Milieu box-to-box avec des jambes fraîches pour le pressing.' },
+  { name: 'Ismail Saibari',      short: 'Saibari',     x: 50, y: 66, role: 'Milieu offensif',     startLoad: 66, loadRate: 0.58, sub: 'Meneur créatif pour garder la création de chances.' },
+  { name: 'Soufiane Rahimi',     short: 'Rahimi',      x: 78, y: 50, role: 'Attaquant',           startLoad: 69, loadRate: 0.64, sub: 'Attaquant rapide pour exploiter une défense fatiguée.' },
 ]
 
-// ── Bench: who is warm and ready, matched to the roles above ──
+// ── Banc : qui est prêt, associé aux postes ci-dessus ──
 const BENCH = [
-  { name: 'Right wing-back',   detail: 'Recovery pace, strong 1v1', ready: 'Ready', covers: 'Right wing-back' },
-  { name: 'Full-back',         detail: 'Two-footed, good overlap',  ready: 'Ready', covers: 'Left-side full-back' },
-  { name: 'Central midfield',  detail: 'Ball-winner, high work-rate', ready: 'Warming up', covers: 'Central midfield' },
-  { name: 'Attacking midfield', detail: 'Line-breaking passer',      ready: 'Ready', covers: 'Attacking midfield' },
-  { name: 'Striker',           detail: 'Pace + direct running',      ready: 'Ready', covers: 'Striker' },
+  { name: 'Arrière droit',    detail: 'Vitesse de récupération, bon en 1v1', ready: 'Prêt' },
+  { name: 'Latéral',          detail: 'Deux pieds, bon débordement',         ready: 'Prêt' },
+  { name: 'Milieu central',   detail: 'Récupérateur, gros volume',           ready: 'À l’échauffement' },
+  { name: 'Milieu offensif',  detail: 'Passeur qui casse les lignes',        ready: 'Prêt' },
+  { name: 'Attaquant',        detail: 'Vitesse + jeu direct',                ready: 'Prêt' },
 ]
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)) }
 
-// ── Turn a live squad snapshot into a ranked bench-decision board ──
+// ── Transforme l'état de l'équipe en tableau de décisions de banc classé ──
 function buildSubBoard(squad, minute) {
   return squad
     .map(p => {
@@ -128,22 +127,22 @@ function buildSubBoard(squad, minute) {
       let priority, action, injuryRisk
       if (load >= 88) {
         priority = 'now'
-        action = `Sub now — physical output has dropped off and cover is thin.`
-        injuryRisk = 'High'
+        action = 'Changer maintenant — l’activité physique a chuté et la couverture est faible.'
+        injuryRisk = 'Élevé'
       } else if (load >= 82) {
         priority = 'soon'
-        action = `Prepare a change — fading fast, plan the swap in the next few minutes.`
-        injuryRisk = 'Elevated'
+        action = 'Préparer un changement — baisse rapide, planifier la sortie dans les prochaines minutes.'
+        injuryRisk = 'Accru'
       } else if (load >= 72) {
         priority = 'watch'
-        action = `Monitor — sprint output slipping, reassess around ${dangerMinute}'.`
-        injuryRisk = 'Moderate'
+        action = `Surveiller — les sprints faiblissent, réévaluer vers ${dangerMinute}'.`
+        injuryRisk = 'Modéré'
       } else {
         priority = 'ok'
-        action = `No concern — load within normal range.`
-        injuryRisk = 'Low'
+        action = 'Aucun souci — charge dans la normale.'
+        injuryRisk = 'Faible'
       }
-      if (p.role === 'Goalkeeper') { priority = 'ok'; action = 'Goalkeeper — no rotation planned.'; injuryRisk = 'Low' }
+      if (p.role === 'Gardien') { priority = 'ok'; action = 'Gardien — aucune rotation prévue.'; injuryRisk = 'Faible' }
 
       return {
         ...p,
@@ -161,56 +160,56 @@ function buildSubBoard(squad, minute) {
     })
 }
 
-const PRIORITY_LABEL = { now: 'SUB NOW', soon: 'PREPARE', watch: 'WATCH', ok: 'OK' }
+const PRIORITY_LABEL = { now: 'CHANGER', soon: 'PRÉPARER', watch: 'SURVEILLER', ok: 'OK' }
 
-// ── Coach chatbot — routed to bench decisions ──
+// ── Chatbot du coach — orienté décisions de banc ──
 function getCoachReply(input, { board, minute, subsUsed }) {
   const msg = input.toLowerCase().trim()
   const now = board.filter(p => p.priority === 'now')
   const soon = board.filter(p => p.priority === 'soon')
   const watch = board.filter(p => p.priority === 'watch')
 
-  if (/who|change|sub|remplac|sortir|bench|off/.test(msg)) {
+  if (/qui|change|remplac|sortir|banc|sub/.test(msg)) {
     if (now.length) {
-      return `Take off now: ${now.map(p => `${p.short} (load ${p.load}%, ${p.role}) → bring on a ${p.role.toLowerCase()} — ${p.sub}`).join(' | ')}. ${soon.length ? `Next in line: ${soon.map(p => p.short).join(', ')}.` : ''}`
+      return `À sortir maintenant : ${now.map(p => `${p.short} (charge ${p.load}%, ${p.role}) → faire entrer un(e) ${p.role.toLowerCase()} — ${p.sub}`).join(' | ')}. ${soon.length ? `Ensuite : ${soon.map(p => p.short).join(', ')}.` : ''}`
     }
-    if (soon.length) return `No forced change yet, but get someone ready for ${soon.map(p => `${p.short} (${p.load}%)`).join(', ')}. Reassess within 3–4 minutes.`
-    if (watch.length) return `Nothing urgent. Keep an eye on ${watch.map(p => `${p.short} (danger ~${p.dangerMinute}')`).join(', ')}.`
-    return 'Whole XI is inside normal load — no substitution needed right now.'
+    if (soon.length) return `Pas de changement forcé pour l’instant, mais préparer quelqu’un pour ${soon.map(p => `${p.short} (${p.load}%)`).join(', ')}. Réévaluer dans 3–4 minutes.`
+    if (watch.length) return `Rien d’urgent. Garder un œil sur ${watch.map(p => `${p.short} (danger ~${p.dangerMinute}')`).join(', ')}.`
+    return 'Tout le XI est dans une charge normale — aucun changement nécessaire pour l’instant.'
   }
-  if (/when|timing|minute/.test(msg)) {
+  if (/quand|timing|minute/.test(msg)) {
     const next = [...board].filter(p => p.priority !== 'ok').sort((a, b) => a.dangerMinute - b.dangerMinute)[0]
-    if (!next) return `Minute ${minute}' — no player projected into the danger zone before full time.`
-    return `Minute ${minute}'. Earliest forced call: ${next.short} around ${next.dangerMinute}'. Plan your first change for roughly ${Math.max(minute + 1, next.dangerMinute - 2)}'.`
+    if (!next) return `${minute}' — aucun joueur projeté en zone de danger avant la fin du match.`
+    return `${minute}'. Premier changement forcé probable : ${next.short} vers ${next.dangerMinute}'. Planifier le premier changement vers ${Math.max(minute + 1, next.dangerMinute - 2)}'.`
   }
-  if (/injur|risk|hamstring|pull|blessure/.test(msg)) {
-    const risky = board.filter(p => p.injuryRisk === 'High' || p.injuryRisk === 'Elevated')
-    if (!risky.length) return 'No elevated injury-risk markers across the XI.'
-    return `Injury-risk watch: ${risky.map(p => `${p.short} — ${p.injuryRisk} (load ${p.load}%, sprint output −${p.sprintDrop}%)`).join(' | ')}. Repeated hard efforts with poor recovery raise strain risk.`
+  if (/blessure|risque|ischio|claquage/.test(msg)) {
+    const risky = board.filter(p => p.injuryRisk === 'Élevé' || p.injuryRisk === 'Accru')
+    if (!risky.length) return 'Aucun marqueur de risque de blessure élevé sur le XI.'
+    return `Risque de blessure : ${risky.map(p => `${p.short} — ${p.injuryRisk} (charge ${p.load}%, sprints −${p.sprintDrop}%)`).join(' | ')}. Efforts intenses répétés avec mauvaise récupération = risque musculaire.`
   }
-  if (/bench|ready|warm/.test(msg)) {
-    return `Bench status: ${BENCH.map(b => `${b.name} — ${b.ready}`).join(' | ')}.`
+  if (/banc|prêt|pret|échauff|echauff/.test(msg)) {
+    return `État du banc : ${BENCH.map(b => `${b.name} — ${b.ready}`).join(' | ')}.`
   }
-  if (/how many|left|used|remaining/.test(msg)) {
-    return `Substitutions used: ${subsUsed} of 5. You have ${5 - subsUsed} changes and up to 3 stoppages left.`
+  if (/combien|reste|restant|utilisé|utilise/.test(msg)) {
+    return `Remplacements utilisés : ${subsUsed} sur 5. Il reste ${5 - subsUsed} changements et jusqu’à 3 arrêts de jeu.`
   }
-  if (/fresh|freshest|keep on|fine/.test(msg)) {
+  if (/frais|garder|forme/.test(msg)) {
     const freshest = [...board].sort((a, b) => a.load - b.load)[0]
-    return `Freshest outfield option still on: ${freshest.short} at ${freshest.load}% load — safe to keep for the full 90.`
+    return `Joueur de champ le plus frais encore sur le terrain : ${freshest.short} à ${freshest.load}% de charge — peut tenir les 90 minutes.`
   }
-  if (/hello|hi|help|aide/.test(msg)) {
-    return 'Ask me: who to change, when, injury risk, bench readiness, or how many subs are left.'
+  if (/bonjour|salut|aide|help/.test(msg)) {
+    return 'Demandez-moi : qui changer, quand, risque de blessure, état du banc, ou combien de remplacements restants.'
   }
   const lead = now[0] || soon[0] || watch[0]
   return lead
-    ? `Minute ${minute}'. Top call: ${lead.short} (${lead.load}% load, ${PRIORITY_LABEL[lead.priority]}). ${lead.action}`
-    : `Minute ${minute}'. Squad load is under control — no change needed. Ask about timing, injury risk or the bench.`
+    ? `${minute}'. Priorité : ${lead.short} (charge ${lead.load}%, ${PRIORITY_LABEL[lead.priority]}). ${lead.action}`
+    : `${minute}'. La charge de l’équipe est maîtrisée — aucun changement. Demandez le timing, le risque de blessure ou le banc.`
 }
 
 const INITIAL_MESSAGES = [
-  { type: 'bot', text: 'I track every player\'s physical load live and rank your substitution options — who to take off, when, and who to bring on.' },
-  { type: 'coach', text: 'Who should come off first?' },
-  { type: 'bot', text: 'Ask "who to change", "when", "injury risk" or "bench" and I\'ll answer from the live board.' },
+  { type: 'bot', text: 'Je suis la charge physique de chaque joueur en direct et je classe vos options de remplacement — qui sortir, quand, et qui faire entrer.' },
+  { type: 'coach', text: 'Qui doit sortir en premier ?' },
+  { type: 'bot', text: 'Demandez « qui changer », « quand », « risque de blessure » ou « banc » et je réponds depuis le tableau en direct.' },
 ]
 
 export default function TeamPerformance() {
@@ -224,7 +223,7 @@ export default function TeamPerformance() {
   const [subsUsed, setSubsUsed] = useState(1)
   const [doneSubs, setDoneSubs] = useState([])
 
-  // advance the simulated match clock every 3s
+  // avance l'horloge du match simulé toutes les 3 s
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 3000)
     return () => clearInterval(id)
@@ -234,7 +233,7 @@ export default function TeamPerformance() {
     setMinute(m => (m >= 90 ? 46 : m + 1))
   }, [tick])
 
-  // live squad snapshot: load climbs with the clock + a little noise, minus any player already subbed
+  // état de l'équipe en direct : la charge monte avec l'horloge + un peu de bruit
   const squad = useMemo(() => {
     return SQUAD_BASE
       .filter(p => !doneSubs.includes(p.name))
@@ -255,7 +254,7 @@ export default function TeamPerformance() {
   const board = useMemo(() => buildSubBoard(squad, minute), [squad, minute])
   const topCall = board.find(p => p.priority === 'now') || board.find(p => p.priority === 'soon') || null
 
-  // Only auto-scroll the chat when the user hasn't scrolled up to read earlier messages
+  // Défilement auto du chat seulement si l'utilisateur n'a pas remonté la conversation
   useEffect(() => {
     const box = chatBoxRef.current
     if (box && chatWasAtBottomRef.current) {
@@ -279,44 +278,44 @@ export default function TeamPerformance() {
     setDoneSubs(prev => [...prev, playerName])
     setSubsUsed(n => n + 1)
     const p = SQUAD_BASE.find(s => s.name === playerName)
-    setMessages(prev => [...prev, { type: 'bot', text: `✓ ${p.short} taken off at ${minute}'. Bring on a ${p.role.toLowerCase()} — ${p.sub} (${subsUsed + 1}/5 subs used).` }])
+    setMessages(prev => [...prev, { type: 'bot', text: `✓ ${p.short} sorti à la ${minute}'. Faire entrer un(e) ${p.role.toLowerCase()} — ${p.sub} (${subsUsed + 1}/5 remplacements utilisés).` }])
   }
 
   const flaggedCount = board.filter(p => p.priority === 'now' || p.priority === 'soon').length
 
   return (
     <div className="tp-page">
-      <Navbar title="Team Performance" />
+      <Navbar title="Performance de l'Équipe" />
 
       <div className="tp-layout">
         <aside className="tp-sidebar">
-          <img className="tp-team-logo" src={TEAM_LOGO} alt="Atlas Lions" />
-          <div className="tp-team-name">Atlas Lions</div>
+          <img className="tp-team-logo" src={TEAM_LOGO} alt="Lions de l'Atlas" />
+          <div className="tp-team-name">Lions de l'Atlas</div>
 
           <div className="tp-sidebar-card">
-            <span className="tp-sidebar-card-title">Match Clock</span>
+            <span className="tp-sidebar-card-title">Chrono du match</span>
             <div className="tp-clock">{minute}'</div>
-            <div className="tp-clock-sub">2nd half · live</div>
+            <div className="tp-clock-sub">2e mi-temps · en direct</div>
           </div>
 
           <div className="tp-sidebar-card">
-            <span className="tp-sidebar-card-title">Substitutions</span>
+            <span className="tp-sidebar-card-title">Remplacements</span>
             <div className="tp-subs-count">{subsUsed}<small>/5</small></div>
             <div className="tp-subs-pips">
               {[0, 1, 2, 3, 4].map(i => (
                 <span key={i} className={`tp-sub-pip ${i < subsUsed ? 'used' : ''}`} />
               ))}
             </div>
-            <div className="tp-clock-sub">{5 - subsUsed} changes left</div>
+            <div className="tp-clock-sub">{5 - subsUsed} changements restants</div>
           </div>
 
           <div className="tp-sidebar-card">
-            <span className="tp-sidebar-card-title">On the Bench</span>
+            <span className="tp-sidebar-card-title">Sur le banc</span>
             <ul className="tp-bench-list">
               {BENCH.map(b => (
                 <li key={b.name}>
                   <span>{b.name}</span>
-                  <em className={b.ready === 'Ready' ? 'ready' : 'warm'}>{b.ready}</em>
+                  <em className={b.ready === 'Prêt' ? 'ready' : 'warm'}>{b.ready}</em>
                 </li>
               ))}
             </ul>
@@ -325,43 +324,43 @@ export default function TeamPerformance() {
 
         <main className="tp-main">
           <header className="tp-page-head">
-            <h1>Substitution &amp; Fatigue Board</h1>
-            <p>Live physical-load tracking for the starting XI, ranked into clear bench decisions — who to take off, when, and who to bring on.</p>
+            <h1>Tableau des Remplacements &amp; de la Fatigue</h1>
+            <p>Suivi en direct de la charge physique du XI de départ, classé en décisions de banc claires — qui sortir, quand, et qui faire entrer.</p>
           </header>
 
-          {/* ── Headline recommendation ── */}
+          {/* ── Recommandation principale ── */}
           <section className={`tp-headline ${topCall ? `tp-headline-${topCall.priority}` : 'tp-headline-ok'}`}>
             {topCall ? (
               <>
                 <img className="tp-headline-photo" src={getPlayerPhoto(topCall.name)} alt="" />
                 <div className="tp-headline-body">
-                  <div className="tp-headline-tag">{PRIORITY_LABEL[topCall.priority]} · minute {minute}'</div>
+                  <div className="tp-headline-tag">{PRIORITY_LABEL[topCall.priority]} · {minute}'</div>
                   <h2>{topCall.name} <span>{topCall.role}</span></h2>
                   <p>{topCall.action}</p>
-                  <p className="tp-headline-sub">Bring on: {topCall.sub}</p>
+                  <p className="tp-headline-sub">Faire entrer : {topCall.sub}</p>
                 </div>
                 <button
                   className="tp-headline-btn"
                   onClick={() => makeSub(topCall.name)}
                   disabled={subsUsed >= 5}
                 >
-                  {subsUsed >= 5 ? 'No subs left' : `Confirm sub (${topCall.short})`}
+                  {subsUsed >= 5 ? 'Plus de remplacements' : `Confirmer (${topCall.short})`}
                 </button>
               </>
             ) : (
               <div className="tp-headline-body">
-                <div className="tp-headline-tag">Minute {minute}'</div>
-                <h2>No substitution needed right now</h2>
-                <p>Every player is inside normal physical load. Keep watching the board — flags appear as legs tire.</p>
+                <div className="tp-headline-tag">{minute}'</div>
+                <h2>Aucun remplacement nécessaire pour l'instant</h2>
+                <p>Tous les joueurs sont dans une charge physique normale. Continuez à surveiller le tableau — les alertes apparaissent quand les jambes fatiguent.</p>
               </div>
             )}
           </section>
 
-          {/* ── Ranked decision board ── */}
+          {/* ── Tableau de décisions classé ── */}
           <section className="tp-panel">
             <div className="tp-panel-title">
-              Decision Board
-              <span className="tp-panel-note">{flaggedCount} flagged · sorted by urgency</span>
+              Tableau de décisions
+              <span className="tp-panel-note">{flaggedCount} signalé(s) · trié par urgence</span>
             </div>
             <div className="tp-board">
               {board.map(p => (
@@ -381,14 +380,14 @@ export default function TeamPerformance() {
                         }}
                       />
                     </div>
-                    <span className="tp-load-val">{p.load}% load</span>
-                    <span className="tp-load-meta">sprint −{p.sprintDrop}% · risk {p.injuryRisk}</span>
+                    <span className="tp-load-val">{p.load}% de charge</span>
+                    <span className="tp-load-meta">sprints −{p.sprintDrop}% · risque {p.injuryRisk}</span>
                   </div>
                   <div className="tp-board-mins">
                     {p.priority === 'ok'
                       ? <span className="tp-mins-ok">stable</span>
                       : p.priority === 'now'
-                        ? <span className="tp-mins-now">now</span>
+                        ? <span className="tp-mins-now">maintenant</span>
                         : <span className="tp-mins-soon">danger ~{p.dangerMinute}'</span>}
                   </div>
                   <div className={`tp-board-badge tp-badge-${p.priority}`}>{PRIORITY_LABEL[p.priority]}</div>
@@ -397,25 +396,25 @@ export default function TeamPerformance() {
                     onClick={() => makeSub(p.name)}
                     disabled={subsUsed >= 5 || p.priority === 'ok'}
                   >
-                    Sub
+                    Sortir
                   </button>
                 </div>
               ))}
               {doneSubs.length > 0 && (
                 <div className="tp-board-done">
-                  Already changed: {doneSubs.map(n => SQUAD_BASE.find(s => s.name === n)?.short).join(', ')}
+                  Déjà remplacé(s) : {doneSubs.map(n => SQUAD_BASE.find(s => s.name === n)?.short).join(', ')}
                 </div>
               )}
             </div>
           </section>
 
-          {/* ── Pitch (fatigue rings) + Coach chatbot ── */}
+          {/* ── Terrain (anneaux de charge) + chatbot du coach ── */}
           <section className="tp-field-section">
             <div className="tp-field-section-header">
-              <h2 className="tp-field-section-title">Squad Load Map</h2>
+              <h2 className="tp-field-section-title">Carte de Charge de l'Équipe</h2>
               <div className="tp-field-legend">
-                <span><i style={{ background: '#37b24d' }} />Fresh</span>
-                <span><i style={{ background: '#e0a300' }} />Tiring</span>
+                <span><i style={{ background: '#37b24d' }} />Frais</span>
+                <span><i style={{ background: '#e0a300' }} />Fatigue</span>
                 <span><i style={{ background: '#e23b3b' }} />Danger</span>
               </div>
             </div>
@@ -427,7 +426,7 @@ export default function TeamPerformance() {
 
               <div className="tp-fr-panel tp-fr-chat">
                 <div className="tp-fr-title">
-                  <span>Coach Assistant</span>
+                  <span>Assistant du Coach</span>
                   <span className="tp-ai-assist-dot" />
                 </div>
                 <div
@@ -443,7 +442,7 @@ export default function TeamPerformance() {
                   ))}
                 </div>
                 <div className="tp-chat-suggestions">
-                  {['Who to change', 'When', 'Injury risk', 'Bench', 'Subs left'].map((q) => (
+                  {['Qui changer', 'Quand', 'Risque de blessure', 'Banc', 'Remplacements restants'].map((q) => (
                     <button key={q} type="button" className="tp-chat-suggestion-chip" onClick={() => sendMessage(q)}>
                       {q}
                     </button>
@@ -454,15 +453,15 @@ export default function TeamPerformance() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Ask about substitutions..."
+                    placeholder="Posez une question sur les remplacements..."
                   />
-                  <button onClick={() => sendMessage()}>Send</button>
+                  <button onClick={() => sendMessage()}>Envoyer</button>
                 </div>
               </div>
             </div>
           </section>
 
-          <footer className="tp-footer">Substitution &amp; Fatigue Board | Live coach view</footer>
+          <footer className="tp-footer">Tableau des Remplacements &amp; de la Fatigue | Vue coach en direct</footer>
         </main>
       </div>
     </div>

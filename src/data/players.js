@@ -106,3 +106,40 @@ export const opponentPlayers = [
 
 export const FALLBACK_PHOTO =
   'https://store.frmf.ma/cdn/shop/files/2_ACHRAF_HAKIMI_Away_2048x2048.webp?v=1781021899'
+
+// ── Custom players added from the "Ajouter un joueur" page ──
+// Stored in localStorage so they persist across reloads and are
+// merged into the squad/opponent lists used across the app.
+const CUSTOM_PLAYERS_KEY = 'customPlayers'
+
+export function loadCustomPlayers() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PLAYERS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch (_) {
+    return []
+  }
+}
+
+function saveCustomPlayers(list) {
+  localStorage.setItem(CUSTOM_PLAYERS_KEY, JSON.stringify(list))
+}
+
+export function addCustomPlayer(player) {
+  const list = loadCustomPlayers()
+  list.push(player)
+  saveCustomPlayers(list)
+  return list
+}
+
+export function removeCustomPlayer(name, team) {
+  const list = loadCustomPlayers().filter(p => !(p.name === name && p.team === team))
+  saveCustomPlayers(list)
+  return list
+}
+
+export function getAllPlayers(team) {
+  const base = team === 'opponent' ? opponentPlayers : players
+  const custom = loadCustomPlayers().filter(p => p.team === team)
+  return [...base, ...custom]
+}

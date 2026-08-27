@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard GPS + MPU6050 + MQTT</title>
+
+  <!-- MQTT.js : connexion MQTT via WebSocket -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+  <!-- Chart.js : graphiques en temps réel -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet : carte GPS -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          crossorigin=""></script>
+
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: #101b2d;
+      --panel-2: #15233a;
+      --border: #263955;
+      --text: #eef5ff;
+      --muted: #9eb0c9;
+      --good: #24c78e;
+      --warn: #f4b740;
+      --bad: #f25f5c;
+      --info: #51a8ff;
+      --shadow: 0 16px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(81,168,255,.13), transparent 28rem),
+        radial-gradient(circle at bottom left, rgba(36,199,142,.1), transparent 24rem),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      width: min(1500px, 96%);
+      margin: 0 auto;
+      padding: 24px 0 50px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 3vw, 2.45rem);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .connection-pill {
+      flex: 0 0 auto;
+      display: inline-flex;
+      gap: 9px;
+      align-items: center;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(16, 27, 45, .78);
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bad);
+      box-shadow: 0 0 0 5px rgba(242,95,92,.12);
+    }
+
+    .dot.connected {
+      background: var(--good);
+      box-shadow: 0 0 0 5px rgba(36,199,142,.12);
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(21,35,58,.96), rgba(16,27,45,.96));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .config {
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1.3fr auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0b1628;
+      color: var(--text);
+      border-radius: 11px;
+      padding: 12px 13px;
+      outline: none;
+      font-size: .94rem;
+    }
+
+    input:focus {
+      border-color: var(--info);
+      box-shadow: 0 0 0 3px rgba(81,168,255,.13);
+    }
+
+    button {
+      border: none;
+      border-radius: 11px;
+      padding: 12px 17px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .18s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: var(--info);
+      color: #04101f;
+    }
+
+    .secondary {
+      background: #263955;
+      color: var(--text);
+    }
+
+    .status-line {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: .9rem;
+      word-break: break-word;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      padding: 15px;
+      min-height: 112px;
+    }
+
+    .metric-title {
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: clamp(1.2rem, 2vw, 1.72rem);
+      font-weight: 850;
+      margin-top: 11px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-note {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: .8rem;
+    }
+
+    .good-text { color: var(--good); }
+    .warn-text { color: var(--warn); }
+    .bad-text { color: var(--bad); }
+    .info-text { color: var(--info); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.25fr .9fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .section {
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .section-hint {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    #map {
+      height: 390px;
+      border-radius: 13px;
+      overflow: hidden;
+      background: #0b1628;
+    }
+
+    .diagnostic {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(145px, .85fr) 1.4fr;
+      gap: 12px;
+      border-bottom: 1px solid rgba(38,57,85,.68);
+      padding: 9px 0;
+      align-items: start;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .key {
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .value {
+      font-weight: 700;
+      font-size: .88rem;
+      overflow-wrap: anywhere;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 305px;
+    }
+
+    .table-panel {
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .sensor-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sensor-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(38,57,85,.6);
+      font-size: .9rem;
+    }
+
+    .sensor-table td:first-child {
+      color: var(--muted);
+    }
+
+    .sensor-table td:last-child {
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .log {
+      background: #06101e;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-height: 190px;
+      max-height: 330px;
+      overflow: auto;
+      padding: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .log-entry {
+      padding: 7px 2px;
+      border-bottom: 1px solid rgba(38,57,85,.4);
+    }
+
+    .topic {
+      color: var(--info);
+      font-weight: 700;
+    }
+
+    .empty-map-message {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 390px;
+      color: var(--muted);
+      text-align: center;
+      padding: 30px;
+    }
+
+    @media (max-width: 1150px) {
+      .cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .config-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .header {
+        flex-direction: column;
+      }
+      .main-grid,
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+      #map {
+        height: 330px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page {
+        width: 94%;
+        padding-top: 16px;
+      }
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      .metric {
+        min-height: 94px;
+      }
+      .row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+      .chart-wrap {
+        height: 260px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>GPS + MPU6050 Live Dashboard</h1>
+        <div class="subtitle">
+          Test en temps réel du Wemos, du GPS, du MPU6050 et des messages MQTT.
+        </div>
+      </div>
+
+      <div class="connection-pill">
+        <span id="connectionDot" class="dot"></span>
+        <span id="connectionText">Déconnecté</span>
+      </div>
+    </header>
+
+    <section class="panel config">
+      <div class="config-grid">
+        <div>
+          <label for="brokerUrl">Broker WebSocket sécurisé</label>
+          <input id="brokerUrl"
+                 value="wss://broker.hivemq.com:8884/mqtt"
+                 autocomplete="off" />
+        </div>
+
+        <div>
+          <label for="topicRoot">Racine du topic</label>
+          <input id="topicRoot"
+                 value="football/tracker/test-rabab-2026"
+                 autocomplete="off" />
+        </div>
+
+        <button id="connectButton" class="primary">Connecter</button>
+        <button id="disconnectButton" class="secondary">Déconnecter</button>
+      </div>
+
+      <div id="subscriptionInfo" class="status-line">
+        Abonnement prévu : football/tracker/test-rabab-2026/#
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="panel metric">
+        <div class="metric-title">Appareil</div>
+        <div id="deviceId" class="metric-value">—</div>
+        <div id="deviceStatus" class="metric-note">Aucun message</div>
+      </article>
+
+      <article class="panel metric">
+        <div class="metric-title">Santé GPS</div>
+        <div id="gpsHealth" class="metric-value">—</div>
+        <div id="gpsHardware" class="metric-note">En attente</div>
+      </article>
+
+      <article class="panel metric">
+        <div class="metric-title">Satellites</div>
+        <div id="satellites" class="metric-value">—</div>
+        <div id="hdop" class="metric-note">HDOP : —</div>
+      </article>
+
+      <article class="panel metric">
+        <div class="metric-title">Vitesse</div>
+        <div id="speed" class="metric-value">—</div>
+        <div class="metric-note">km/h</div>
+      </article>
+
+      <article class="panel metric">
+        <div class="metric-title">MPU6050</div>
+        <div id="mpuStatus" class="metric-value">—</div>
+        <div id="temperature" class="metric-note">Température : —</div>
+      </article>
+
+      <article class="panel metric">
+        <div class="metric-title">Dernier message</div>
+        <div id="lastMessageAge" class="metric-value">—</div>
+        <div id="messageCount" class="metric-note">0 message</div>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <article class="panel section">
+        <div class="section-title">
+          <h2>Position GPS</h2>
+          <span id="coordinates" class="section-hint">Latitude — | Longitude —</span>
+        </div>
+        <div id="map"></div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-title">
+          <h2>Diagnostic GPS</h2>
+          <span class="section-hint">Topic gps/diagnostic</span>
+        </div>
+
+        <div class="diagnostic">
+          <div class="row">
+            <div class="key">État probable</div>
+            <div id="diagHardware" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Action recommandée</div>
+            <div id="recommendedAction" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Données série récentes</div>
+            <div id="serialRecent" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Octets reçus</div>
+            <div id="bytesReceived" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Trames NMEA valides</div>
+            <div id="nmeaPassed" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Erreurs checksum</div>
+            <div id="nmeaFailed" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Taux d'erreur</div>
+            <div id="checksumRate" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Âge de la position</div>
+            <div id="locationAge" class="value">—</div>
+          </div>
+          <div class="row">
+            <div class="key">Dernière trame NMEA</div>
+            <div id="lastNmea" class="value">—</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="panel section">
+        <div class="section-title">
+          <h2>Accélération</h2>
+          <span class="section-hint">m/s²</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="accChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-title">
+          <h2>Gyroscope</h2>
+          <span class="section-hint">rad/s</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="gyroChart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="section-title">
+        <h2>Dernières mesures</h2>
+        <span id="lastTopic" class="section-hint">Aucun topic reçu</span>
+      </div>
+
+      <table class="sensor-table">
+        <tbody>
+          <tr><td>Latitude</td><td id="tableLatitude">—</td></tr>
+          <tr><td>Longitude</td><td id="tableLongitude">—</td></tr>
+          <tr><td>Altitude</td><td id="tableAltitude">—</td></tr>
+          <tr><td>Vitesse</td><td id="tableSpeed">—</td></tr>
+          <tr><td>Accélération X / Y / Z</td><td id="tableAcceleration">—</td></tr>
+          <tr><td>Gyroscope X / Y / Z</td><td id="tableGyro">—</td></tr>
+          <tr><td>Température</td><td id="tableTemperature">—</td></tr>
+          <tr><td>Signal Wi-Fi RSSI</td><td id="tableRssi">—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel section">
+      <div class="section-title">
+        <h2>Journal MQTT</h2>
+        <button id="clearLogButton" class="secondary">Effacer</button>
+      </div>
+      <div id="messageLog" class="log">Aucun message reçu.</div>
+    </section>
+  </main>
+
+  <script>
+    let client = null;
+    let messageCounter = 0;
+    let lastMessageAt = null;
+    let map = null;
+    let marker = null;
+    let trackLine = null;
+    let trackPoints = [];
+
+    const maxChartPoints = 40;
+
+    const $ = (id) => document.getElementById(id);
+
+    const connectionDot = $("connectionDot");
+    const connectionText = $("connectionText");
+    const connectButton = $("connectButton");
+    const disconnectButton = $("disconnectButton");
+    const brokerUrlInput = $("brokerUrl");
+    const topicRootInput = $("topicRoot");
+    const subscriptionInfo = $("subscriptionInfo");
+
+    function formatValue(value, decimals = 2, suffix = "") {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) {
+        return "—";
+      }
+      return `${Number(value).toFixed(decimals)}${suffix}`;
+    }
+
+    function boolText(value) {
+      if (value === true) return "Oui";
+      if (value === false) return "Non";
+      return "—";
+    }
+
+    function safeText(value, fallback = "—") {
+      return value === null || value === undefined || value === "" ? fallback : String(value);
+    }
+
+    function healthClass(code) {
+      if (!code) return "";
+      const upper = String(code).toUpperCase();
+
+      if (upper.includes("GOOD") || upper.includes("FIX_OK") || upper === "ONLINE" || upper === "CONNECTED") {
+        return "good-text";
+      }
+
+      if (
+        upper.includes("SEARCH") ||
+        upper.includes("WAIT") ||
+        upper.includes("WEAK") ||
+        upper.includes("POOR") ||
+        upper.includes("STALE") ||
+        upper.includes("PARTIAL") ||
+        upper.includes("BOOT")
+      ) {
+        return "warn-text";
+      }
+
+      if (
+        upper.includes("NO_") ||
+        upper.includes("STOPPED") ||
+        upper.includes("INVALID") ||
+        upper.includes("ERROR") ||
+        upper.includes("FAULT") ||
+        upper.includes("DISCONNECTED") ||
+        upper.includes("CORRUPT")
+      ) {
+        return "bad-text";
+      }
+
+      return "info-text";
+    }
+
+    function setClass(element, className) {
+      element.classList.remove("good-text", "warn-text", "bad-text", "info-text");
+      if (className) element.classList.add(className);
+    }
+
+    function setConnectionState(connected, text) {
+      connectionDot.classList.toggle("connected", connected);
+      connectionText.textContent = text;
+    }
+
+    function initMap() {
+      if (!window.L) {
+        $("map").innerHTML =
+          '<div class="empty-map-message" style="display:flex">La bibliothèque de carte n’a pas été chargée.</div>';
+        return;
+      }
+
+      map = L.map("map").setView([31.7917, -7.0926], 5);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+
+      trackLine = L.polyline([], {
+        weight: 4,
+        opacity: 0.8
+      }).addTo(map);
+    }
+
+    function updateMap(latitude, longitude) {
+      const lat = Number(latitude);
+      const lon = Number(longitude);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || !map) return;
+
+      const point = [lat, lon];
+      trackPoints.push(point);
+
+      if (trackPoints.length > 150) {
+        trackPoints.shift();
+      }
+
+      trackLine.setLatLngs(trackPoints);
+
+      if (!marker) {
+        marker = L.marker(point).addTo(map);
+        map.setView(point, 17);
+      } else {
+        marker.setLatLng(point);
+        map.panTo(point, { animate: true, duration: 0.5 });
+      }
+
+      marker.bindPopup(`Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}`);
+    }
+
+    function chartOptions(title) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: {
+          mode: "index",
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            labels: { color: "#eef5ff" }
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => items.length ? items[0].label : ""
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#9eb0c9", maxTicksLimit: 8 },
+            grid: { color: "rgba(158,176,201,.08)" }
+          },
+          y: {
+            title: {
+              display: true,
+              text: title,
+              color: "#9eb0c9"
+            },
+            ticks: { color: "#9eb0c9" },
+            grid: { color: "rgba(158,176,201,.08)" }
+          }
+        }
+      };
+    }
+
+    function makeChart(canvasId, unit) {
+      return new Chart($(canvasId), {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            { label: "X", data: [], tension: 0.22, pointRadius: 0, borderWidth: 2 },
+            { label: "Y", data: [], tension: 0.22, pointRadius: 0, borderWidth: 2 },
+            { label: "Z", data: [], tension: 0.22, pointRadius: 0, borderWidth: 2 }
+          ]
+        },
+        options: chartOptions(unit)
+      });
+    }
+
+    const accChart = makeChart("accChart", "m/s²");
+    const gyroChart = makeChart("gyroChart", "rad/s");
+
+    function pushChartPoint(chart, x, y, z) {
+      const values = [Number(x), Number(y), Number(z)];
+      if (!values.every(Number.isFinite)) return;
+
+      const label = new Date().toLocaleTimeString();
+
+      chart.data.labels.push(label);
+      chart.data.datasets[0].data.push(values[0]);
+      chart.data.datasets[1].data.push(values[1]);
+      chart.data.datasets[2].data.push(values[2]);
+
+      if (chart.data.labels.length > maxChartPoints) {
+        chart.data.labels.shift();
+        chart.data.datasets.forEach((dataset) => dataset.data.shift());
+      }
+
+      chart.update("none");
+    }
+
+    function logMessage(topic, payload) {
+      const log = $("messageLog");
+
+      if (messageCounter === 1) {
+        log.textContent = "";
+      }
+
+      const entry = document.createElement("div");
+      entry.className = "log-entry";
+
+      const now = new Date().toLocaleTimeString();
+      let formatted = payload;
+
+      try {
+        formatted = JSON.stringify(JSON.parse(payload), null, 2);
+      } catch (_) {}
+
+      entry.innerHTML =
+        `<span class="topic">[${now}] ${escapeHtml(topic)}</span>\n${escapeHtml(formatted)}`;
+
+      log.prepend(entry);
+
+      while (log.children.length > 60) {
+        log.removeChild(log.lastChild);
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateCommon(data, topic) {
+      if (data.device_id) {
+        $("deviceId").textContent = data.device_id;
+      }
+
+      if (data.device_status) {
+        $("deviceStatus").textContent = data.device_status;
+        setClass($("deviceStatus"), healthClass(data.device_status));
+      }
+
+      if (data.gps_health) {
+        $("gpsHealth").textContent = data.gps_health;
+        setClass($("gpsHealth"), healthClass(data.gps_health));
+      }
+
+      if (data.gps_hardware_state) {
+        $("gpsHardware").textContent = data.gps_hardware_state;
+        $("diagHardware").textContent = data.gps_hardware_state;
+        setClass($("diagHardware"), healthClass(data.gps_hardware_state));
+      }
+
+      if (data.satellites !== undefined) {
+        $("satellites").textContent = safeText(data.satellites);
+      }
+
+      if (data.hdop !== undefined) {
+        $("hdop").textContent = `HDOP : ${safeText(data.hdop)}`;
+      }
+
+      if (data.speed_kmh !== undefined) {
+        $("speed").textContent = formatValue(data.speed_kmh, 2);
+        $("tableSpeed").textContent = formatValue(data.speed_kmh, 2, " km/h");
+      }
+
+      if (data.latitude !== undefined) {
+        $("tableLatitude").textContent = formatValue(data.latitude, 6);
+      }
+
+      if (data.longitude !== undefined) {
+        $("tableLongitude").textContent = formatValue(data.longitude, 6);
+      }
+
+      if (data.latitude !== undefined && data.longitude !== undefined) {
+        $("coordinates").textContent =
+          `Latitude ${formatValue(data.latitude, 6)} | Longitude ${formatValue(data.longitude, 6)}`;
+
+        updateMap(data.latitude, data.longitude);
+      }
+
+      if (data.altitude_m !== undefined) {
+        $("tableAltitude").textContent = formatValue(data.altitude_m, 2, " m");
+      }
+
+      if (data.temperature_c !== undefined) {
+        $("temperature").textContent =
+          `Température : ${formatValue(data.temperature_c, 2, " °C")}`;
+        $("tableTemperature").textContent =
+          formatValue(data.temperature_c, 2, " °C");
+      }
+
+      if (data.wifi_rssi !== undefined) {
+        $("tableRssi").textContent = `${safeText(data.wifi_rssi)} dBm`;
+      }
+
+      $("lastTopic").textContent = topic;
+    }
+
+    function updateSensorData(data) {
+      const mpuConnected =
+        data.mpu_connected === true ||
+        data.mpu_status === "connected";
+
+      $("mpuStatus").textContent = mpuConnected ? "Connecté" : "Déconnecté";
+      setClass($("mpuStatus"), mpuConnected ? "good-text" : "bad-text");
+
+      const ax = data.acceleration_x ?? data.acceleration_x_m_s2;
+      const ay = data.acceleration_y ?? data.acceleration_y_m_s2;
+      const az = data.acceleration_z ?? data.acceleration_z_m_s2;
+
+      const gx = data.gyro_x ?? data.gyro_x_rad_s;
+      const gy = data.gyro_y ?? data.gyro_y_rad_s;
+      const gz = data.gyro_z ?? data.gyro_z_rad_s;
+
+      $("tableAcceleration").textContent =
+        `${formatValue(ax, 3)} / ${formatValue(ay, 3)} / ${formatValue(az, 3)} m/s²`;
+
+      $("tableGyro").textContent =
+        `${formatValue(gx, 3)} / ${formatValue(gy, 3)} / ${formatValue(gz, 3)} rad/s`;
+
+      pushChartPoint(accChart, ax, ay, az);
+      pushChartPoint(gyroChart, gx, gy, gz);
+    }
+
+    function updateDiagnostic(data) {
+      if (data.recommended_action !== undefined) {
+        $("recommendedAction").textContent = safeText(data.recommended_action);
+      }
+
+      if (data.serial_data_recent !== undefined) {
+        $("serialRecent").textContent = boolText(data.serial_data_recent);
+        setClass(
+          $("serialRecent"),
+          data.serial_data_recent ? "good-text" : "bad-text"
+        );
+      }
+
+      if (data.bytes_received_total !== undefined) {
+        $("bytesReceived").textContent = safeText(data.bytes_received_total);
+      }
+
+      if (data.nmea_passed_checksum !== undefined) {
+        $("nmeaPassed").textContent = safeText(data.nmea_passed_checksum);
+      }
+
+      if (data.nmea_failed_checksum !== undefined) {
+        $("nmeaFailed").textContent = safeText(data.nmea_failed_checksum);
+        setClass(
+          $("nmeaFailed"),
+          Number(data.nmea_failed_checksum) > 0 ? "warn-text" : "good-text"
+        );
+      }
+
+      if (data.checksum_error_rate_percent !== undefined) {
+        $("checksumRate").textContent =
+          formatValue(data.checksum_error_rate_percent, 2, " %");
+      }
+
+      if (data.location_age_ms !== undefined) {
+        $("locationAge").textContent =
+          data.location_age_ms === null
+            ? "Aucune position"
+            : formatValue(Number(data.location_age_ms) / 1000, 1, " s");
+      }
+
+      if (data.last_nmea_sentence !== undefined) {
+        $("lastNmea").textContent = safeText(data.last_nmea_sentence);
+      }
+    }
+
+    function handleMessage(topic, payloadText) {
+      messageCounter++;
+      lastMessageAt = Date.now();
+
+      $("messageCount").textContent =
+        `${messageCounter} message${messageCounter > 1 ? "s" : ""}`;
+
+      logMessage(topic, payloadText);
+
+      let data;
+      try {
+        data = JSON.parse(payloadText);
+      } catch (_) {
+        if (topic.endsWith("/gps/raw")) {
+          $("lastNmea").textContent = payloadText;
+        }
+        return;
+      }
+
+      updateCommon(data, topic);
+
+      if (topic.endsWith("/data")) {
+        updateSensorData(data);
+      }
+
+      if (topic.includes("/gps/diagnostic")) {
+        updateDiagnostic(data);
+      }
+
+      if (topic.endsWith("/status") && data.device_status) {
+        $("deviceStatus").textContent = data.device_status;
+      }
+    }
+
+    function connectMqtt() {
+      const brokerUrl = brokerUrlInput.value.trim();
+      const topicRoot = topicRootInput.value.trim().replace(/\/+$/, "");
+
+      if (!brokerUrl || !topicRoot) {
+        alert("Veuillez saisir le broker et la racine du topic.");
+        return;
+      }
+
+      localStorage.setItem("mqttBrokerUrl", brokerUrl);
+      localStorage.setItem("mqttTopicRoot", topicRoot);
+
+      if (client) {
+        try {
+          client.end(true);
+        } catch (_) {}
+      }
+
+      const subscription = `${topicRoot}/#`;
+      subscriptionInfo.textContent = `Connexion en cours. Abonnement : ${subscription}`;
+      setConnectionState(false, "Connexion…");
+
+      const clientId =
+        `dashboard_${Math.random().toString(16).slice(2, 10)}_${Date.now()}`;
+
+      client = mqtt.connect(brokerUrl, {
+        clientId,
+        clean: true,
+        connectTimeout: 10000,
+        reconnectPeriod: 3000,
+        keepalive: 30,
+        protocolVersion: 4
+      });
+
+      client.on("connect", () => {
+        setConnectionState(true, "Connecté");
+
+        client.subscribe(subscription, { qos: 0 }, (error) => {
+          if (error) {
+            subscriptionInfo.textContent =
+              `Connexion réussie, mais erreur d'abonnement : ${error.message}`;
+            return;
+          }
+
+          subscriptionInfo.textContent =
+            `Connecté et abonné à : ${subscription}`;
+        });
+      });
+
+      client.on("message", (topic, payload) => {
+        handleMessage(topic, payload.toString());
+      });
+
+      client.on("reconnect", () => {
+        setConnectionState(false, "Reconnexion…");
+      });
+
+      client.on("offline", () => {
+        setConnectionState(false, "Hors ligne");
+      });
+
+      client.on("close", () => {
+        setConnectionState(false, "Déconnecté");
+      });
+
+      client.on("error", (error) => {
+        setConnectionState(false, "Erreur");
+        subscriptionInfo.textContent =
+          `Erreur MQTT/WebSocket : ${error.message || "connexion impossible"}`;
+      });
+    }
+
+    function disconnectMqtt() {
+      if (client) {
+        client.end(true);
+        client = null;
+      }
+
+      setConnectionState(false, "Déconnecté");
+      subscriptionInfo.textContent = "Connexion MQTT arrêtée.";
+    }
+
+    connectButton.addEventListener("click", connectMqtt);
+    disconnectButton.addEventListener("click", disconnectMqtt);
+
+    topicRootInput.addEventListener("input", () => {
+      const root = topicRootInput.value.trim().replace(/\/+$/, "");
+      subscriptionInfo.textContent =
+        `Abonnement prévu : ${root || "racine-du-topic"}/#`;
+    });
+
+    $("clearLogButton").addEventListener("click", () => {
+      $("messageLog").textContent = "Journal effacé.";
+    });
+
+    setInterval(() => {
+      if (!lastMessageAt) {
+        $("lastMessageAge").textContent = "—";
+        return;
+      }
+
+      const seconds = Math.floor((Date.now() - lastMessageAt) / 1000);
+      $("lastMessageAge").textContent =
+        seconds < 2 ? "Maintenant" : `${seconds} s`;
+      setClass(
+        $("lastMessageAge"),
+        seconds <= 5 ? "good-text" : seconds <= 15 ? "warn-text" : "bad-text"
+      );
+    }, 1000);
+
+    window.addEventListener("load", () => {
+      const savedBroker = localStorage.getItem("mqttBrokerUrl");
+      const savedTopic = localStorage.getItem("mqttTopicRoot");
+
+      if (savedBroker) brokerUrlInput.value = savedBroker;
+      if (savedTopic) topicRootInput.value = savedTopic;
+
+      initMap();
+      connectMqtt();
+    });
+  </script>
+</body>
+</html>

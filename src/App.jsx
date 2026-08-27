@@ -6,6 +6,9 @@ import TeamPerformance from './pages/TeamPerformance'
 import Tagger from './pages/Tagger'
 import MatchSetup from './pages/MatchSetup'
 import History from './pages/History'
+import AddPlayer from './pages/AddPlayer'
+import ExpertSystem from './pages/ExpertSystem'
+import AIConfig from './pages/AIConfig'
 
 export default function App() {
   return (
@@ -18,6 +21,9 @@ export default function App() {
         <Route path="/tagger" element={<Tagger />} />
         <Route path="/match-setup" element={<MatchSetup />} />
         <Route path="/history" element={<History />} />
+        <Route path="/add-player" element={<AddPlayer />} />
+        <Route path="/expert-system" element={<ExpertSystem />} />
+        <Route path="/ai-config" element={<AIConfig />} />
       </Routes>
     </BrowserRouter>
   )

@@ -1,14 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
+import mqtt from 'mqtt'
 import Navbar from '../components/Navbar'
 import PlayerSidebar from '../components/PlayerSidebar'
-import { players, opponentPlayers, FALLBACK_PHOTO } from '../data/players'
-import { saveSession } from '../data/history'
+import { getAllPlayers, FALLBACK_PHOTO } from '../data/players'
+import { createSessionWithEvent, appendEventToSession, replaceSessionEvents } from '../data/history'
+import { getActiveMatch } from '../data/matches'
 import './Tagger.css'
 
-const TEAMS = [
-  { key: 'us', label: 'Maroc', sublabel: 'Équipe nationale du Maroc — Effectif', roster: players },
-  { key: 'opponent', label: 'France', sublabel: 'France — Effectif adverse', roster: opponentPlayers },
+const TEAM_META = [
+  { key: 'us', label: 'Maroc', sublabel: 'Équipe nationale du Maroc — Effectif', team: 'morocco' },
+  { key: 'opponent', label: 'France', sublabel: 'France — Effectif adverse', team: 'opponent' },
 ]
+
+// ── MQTT broker — même broker public que le tracker wearable (PlayerPerformance.jsx) ──
+const MQTT_BROKER_URL = 'wss://broker.hivemq.com:8884/mqtt'
+const TAGGER_TOPIC_ROOT = 'football/tagger'
+
+function slugifyPlayerName(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
 
 const ACTION_CATEGORIES = {
   'Short Pass': 'ball', 'Long Pass': 'ball', Cross: 'ball', Shot: 'ball',
@@ -55,6 +65,51 @@ export default function Tagger() {
   const [flashVisible, setFlashVisible] = useState(false)
   const flashTimeoutRef = useRef(null)
   const nextIdRef = useRef(1)
+  const currentSessionIdRef = useRef(null)
+
+  const [rosters, setRosters] = useState({ us: [], opponent: [] })
+  const [activeMatch, setActiveMatch] = useState(null)
+  const [mqttStatus, setMqttStatus] = useState('disconnected') // disconnected | connecting | connected | error
+  const mqttClientRef = useRef(null)
+
+  useEffect(() => {
+    Promise.all([getAllPlayers('morocco'), getAllPlayers('opponent')]).then(([morocco, opponent]) => {
+      setRosters({ us: morocco, opponent })
+    })
+  }, [])
+
+  useEffect(() => {
+    getActiveMatch().then(setActiveMatch).catch(() => setActiveMatch(null))
+  }, [step])
+
+  // ── Connexion MQTT — même broker public que le tracker wearable, se connecte
+  // automatiquement. Le Tagger publie chaque action taguée en direct. ──
+  useEffect(() => {
+    setMqttStatus('connecting')
+    const clientId = `tagger_${Math.random().toString(16).slice(2, 10)}_${Date.now()}`
+    const client = mqtt.connect(MQTT_BROKER_URL, {
+      clientId,
+      clean: true,
+      connectTimeout: 10000,
+      reconnectPeriod: 3000,
+      keepalive: 30,
+      protocolVersion: 4,
+    })
+    mqttClientRef.current = client
+
+    client.on('connect', () => setMqttStatus('connected'))
+    client.on('reconnect', () => setMqttStatus('connecting'))
+    client.on('offline', () => setMqttStatus('disconnected'))
+    client.on('close', () => setMqttStatus('disconnected'))
+    client.on('error', () => setMqttStatus('error'))
+
+    return () => {
+      client.end(true)
+      mqttClientRef.current = null
+    }
+  }, [])
+
+  const TEAMS = TEAM_META.map(t => ({ ...t, roster: rosters[t.key] }))
 
   useEffect(() => {
     if (!timerRunning) return
@@ -75,33 +130,22 @@ export default function Tagger() {
     setEvents([])
     setLogPage(0)
     nextIdRef.current = 1
+    currentSessionIdRef.current = null
     setTimerSeconds(0)
     setTimerRunning(false)
     setStep(2)
   }
 
+  // Chaque action taguée est déjà persistée immédiatement (voir tagAction) —
+  // il n'y a donc rien à sauvegarder ici, juste réinitialiser l'écran.
   function goBack() {
-    if (events.length > 0 && !confirm('Revenir en arrière et perdre la session en cours ? Utilisez « Enregistrer & Terminer » pour la conserver.')) return
     setStep(1)
     setTimerRunning(false)
     setTimerSeconds(0)
     setEvents([])
   }
 
-  function saveAndFinish() {
-    if (!selectedPlayer || !events.length) {
-      alert('Aucune action taguée — rien à enregistrer.')
-      return
-    }
-    saveSession({ player: selectedPlayer, teamKey: taggedTeamKey, events })
-    showFlash('✓ Session enregistrée dans l’historique')
-    setStep(1)
-    setTimerRunning(false)
-    setTimerSeconds(0)
-    setEvents([])
-  }
-
-  function tagAction(action, category) {
+  async function tagAction(action, category) {
     const ev = {
       id: nextIdRef.current++,
       time: formatTime(),
@@ -112,10 +156,52 @@ export default function Tagger() {
     setEvents((prev) => [...prev, ev])
     setLogPage(0)
     showFlash('✓ ' + actionLabel(action))
+
+    // Publication MQTT en direct — le coach abonné sur Performance du Joueur
+    // reçoit l'action instantanément, sans polling. Nécessite un match lancé
+    // par l'admin (topic scopé par matchId).
+    if (activeMatch && mqttClientRef.current) {
+      const topic = `${TAGGER_TOPIC_ROOT}/${activeMatch.id}/${slugifyPlayerName(selectedPlayer.name)}`
+      const payload = {
+        id: `${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+        matchId: activeMatch.id,
+        playerName: selectedPlayer.name,
+        teamKey: taggedTeamKey,
+        action,
+        category,
+        time: ev.time,
+        timestamp: ev.timestamp,
+      }
+      mqttClientRef.current.publish(topic, JSON.stringify(payload), { qos: 0 })
+    }
+
+    // Persistance immédiate : crée la session au premier tag, puis ajoute
+    // chaque action suivante à cette même session — plus besoin d'un
+    // bouton "Enregistrer", chaque tap est déjà sauvegardé.
+    try {
+      if (!currentSessionIdRef.current) {
+        const session = await createSessionWithEvent({ player: selectedPlayer, teamKey: taggedTeamKey, event: ev })
+        currentSessionIdRef.current = session.id
+      } else {
+        await appendEventToSession(currentSessionIdRef.current, ev)
+      }
+    } catch (_) {
+      // Sauvegarde best-effort — l'action reste visible localement même si la requête échoue.
+    }
+  }
+
+  function syncEvents(updated) {
+    if (currentSessionIdRef.current) {
+      replaceSessionEvents(currentSessionIdRef.current, updated).catch(() => {})
+    }
   }
 
   function deleteEvent(id) {
-    setEvents((prev) => prev.filter((e) => e.id !== id))
+    setEvents((prev) => {
+      const updated = prev.filter((e) => e.id !== id)
+      syncEvents(updated)
+      return updated
+    })
   }
 
   function editEvent(id) {
@@ -128,13 +214,15 @@ export default function Tagger() {
       alert('Utilisez l’une de ces actions : ' + ACTION_NAMES.join(', '))
       return
     }
-    setEvents((prev) =>
-      prev.map((e) =>
+    setEvents((prev) => {
+      const updated = prev.map((e) =>
         e.id === id
           ? { ...e, action, category: ACTION_CATEGORIES[action], updatedAt: new Date().toISOString() }
           : e,
-      ),
-    )
+      )
+      syncEvents(updated)
+      return updated
+    })
     showFlash('Modifié : ' + actionLabel(action))
   }
 
@@ -143,6 +231,7 @@ export default function Tagger() {
     if (!confirm('Effacer toutes les actions taguées ?')) return
     setEvents([])
     setLogPage(0)
+    syncEvents([])
   }
 
   function exportJSON() {
@@ -231,10 +320,15 @@ export default function Tagger() {
         title={`Tagging — ${selectedPlayer?.name}`}
         right={
           <>
+            {activeMatch && (
+              <div className={`tagger-live-badge${mqttStatus === 'connected' ? '' : ' offline'}`}>
+                <span className="tagger-live-dot" />
+                {mqttStatus === 'connected' ? 'Match en direct — MQTT connecté' : 'Match en direct — MQTT ' + (mqttStatus === 'connecting' ? 'connexion…' : 'déconnecté')}
+              </div>
+            )}
             <div className={`tagger-team-badge ${taggedTeamKey}`}>
               {taggedTeamKey === 'opponent' ? 'France · Adverse' : 'Maroc'}
             </div>
-            <button className="tagger-save-btn" onClick={saveAndFinish}>&#128190; Enregistrer &amp; Terminer</button>
             <button className="tagger-back-btn" onClick={goBack}>&#8592; Retour</button>
           </>
         }

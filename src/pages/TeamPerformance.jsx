@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Navbar from '../components/Navbar'
-import { players, FALLBACK_PHOTO } from '../data/players'
+import { getAllPlayers, FALLBACK_PHOTO } from '../data/players'
 import './TeamPerformance.css'
-
-function getPlayerPhoto(name) {
-  return players.find(p => p.name === name)?.photo ?? FALLBACK_PHOTO
-}
-function getJersey(name) {
-  return players.find(p => p.name === name)?.jersey ?? ''
-}
 
 // ── Constantes terrain (dimensions FIFA, mètres) — identiques à PlayerPerformance ──
 const FW = 105
@@ -222,6 +215,16 @@ export default function TeamPerformance() {
   const [minute, setMinute] = useState(58)
   const [subsUsed, setSubsUsed] = useState(1)
   const [doneSubs, setDoneSubs] = useState([])
+  const [squadPlayers, setSquadPlayers] = useState([])
+
+  useEffect(() => { getAllPlayers('morocco').then(setSquadPlayers) }, [])
+
+  function getPlayerPhoto(name) {
+    return squadPlayers.find(p => p.name === name)?.photo ?? FALLBACK_PHOTO
+  }
+  function getJersey(name) {
+    return squadPlayers.find(p => p.name === name)?.jersey ?? ''
+  }
 
   // avance l'horloge du match simulé toutes les 3 s
   useEffect(() => {
@@ -249,10 +252,23 @@ export default function TeamPerformance() {
           y: clamp(p.y + Math.cos(tick / 2.1 + i * 1.4) * 4, 6, 94),
         }
       })
-  }, [minute, tick, doneSubs])
+  }, [minute, tick, doneSubs, squadPlayers])
 
   const board = useMemo(() => buildSubBoard(squad, minute), [squad, minute])
   const topCall = board.find(p => p.priority === 'now') || board.find(p => p.priority === 'soon') || null
+
+  // ── Alertes actives — joueurs à changer maintenant / bientôt ou à risque de blessure accru ──
+  const activeAlerts = useMemo(() => board
+    .filter(p => p.priority === 'now' || p.priority === 'soon' || p.injuryRisk === 'Élevé' || p.injuryRisk === 'Accru')
+    .map(p => {
+      const level = p.priority === 'now' ? 'red' : p.priority === 'soon' ? 'orange' : 'yellow'
+      const msg = p.priority === 'now'
+        ? `${p.short} à sortir maintenant — charge ${p.load}% (${p.role})`
+        : p.priority === 'soon'
+          ? `${p.short} à préparer — charge ${p.load}%, danger ~${p.dangerMinute}'`
+          : `${p.short} — risque de blessure ${p.injuryRisk.toLowerCase()} (sprints −${p.sprintDrop}%)`
+      return { level, msg }
+    }), [board])
 
   // Défilement auto du chat seulement si l'utilisateur n'a pas remonté la conversation
   useEffect(() => {
@@ -424,39 +440,67 @@ export default function TeamPerformance() {
                 <SquadFatigueCanvas squad={squad} />
               </div>
 
-              <div className="tp-fr-panel tp-fr-chat">
-                <div className="tp-fr-title">
-                  <span>Assistant du Coach</span>
-                  <span className="tp-ai-assist-dot" />
+              <div className="tp-field-right">
+
+                {/* Alertes */}
+                <div className="tp-fr-panel tp-fr-alerts">
+                  <div className="tp-fr-title">
+                    <span>Alertes Actives</span>
+                    {activeAlerts.length > 0 && (
+                      <span className="tp-alert-badge tp-alert-badge-red">{activeAlerts.length}</span>
+                    )}
+                  </div>
+                  <div className="tp-alerts-body">
+                    {activeAlerts.length === 0 ? (
+                      <div className="tp-no-alert">&#10003; Aucune alerte active</div>
+                    ) : (
+                      activeAlerts.map((a, i) => (
+                        <div key={i} className={`tp-alert-item tp-alert-${a.level}`}>
+                          <span className="tp-alert-icon">
+                            {a.level === 'red' ? '🔴' : a.level === 'orange' ? '🟠' : '🟡'}
+                          </span>
+                          <span>{a.msg}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-                <div
-                  className="tp-chat-box"
-                  ref={chatBoxRef}
-                  onScroll={(e) => {
-                    const el = e.currentTarget
-                    chatWasAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
-                  }}
-                >
-                  {messages.map((msg, i) => (
-                    <div key={i} className={`tp-chat-message ${msg.type}`}>{msg.text}</div>
-                  ))}
+
+                <div className="tp-fr-panel tp-fr-chat">
+                  <div className="tp-fr-title">
+                    <span>Assistant du Coach</span>
+                    <span className="tp-ai-assist-dot" />
+                  </div>
+                  <div
+                    className="tp-chat-box"
+                    ref={chatBoxRef}
+                    onScroll={(e) => {
+                      const el = e.currentTarget
+                      chatWasAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+                    }}
+                  >
+                    {messages.map((msg, i) => (
+                      <div key={i} className={`tp-chat-message ${msg.type}`}>{msg.text}</div>
+                    ))}
+                  </div>
+                  <div className="tp-chat-suggestions">
+                    {['Qui changer', 'Quand', 'Risque de blessure', 'Banc', 'Remplacements restants'].map((q) => (
+                      <button key={q} type="button" className="tp-chat-suggestion-chip" onClick={() => sendMessage(q)}>
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="tp-chat-input">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                      placeholder="Posez une question sur les remplacements..."
+                    />
+                    <button onClick={() => sendMessage()}>Envoyer</button>
+                  </div>
                 </div>
-                <div className="tp-chat-suggestions">
-                  {['Qui changer', 'Quand', 'Risque de blessure', 'Banc', 'Remplacements restants'].map((q) => (
-                    <button key={q} type="button" className="tp-chat-suggestion-chip" onClick={() => sendMessage(q)}>
-                      {q}
-                    </button>
-                  ))}
-                </div>
-                <div className="tp-chat-input">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Posez une question sur les remplacements..."
-                  />
-                  <button onClick={() => sendMessage()}>Envoyer</button>
-                </div>
+
               </div>
             </div>
           </section>

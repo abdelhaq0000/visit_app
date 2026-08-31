@@ -19,6 +19,12 @@
   font-weight: bold;
 }
 
+.home-nav-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
 .home-login-btn {
   background: #10a535;
   color: #ffffff;

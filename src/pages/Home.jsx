@@ -5,7 +5,7 @@ export default function Home() {
     <div className="home-page">
       <nav className="home-navbar">
         <div className="home-nav-title">Accueil</div>
-
+        <img className="home-nav-logo" src="/logo-uib.png" alt="UiB" />
       </nav>
 
       <main className="home-hero">

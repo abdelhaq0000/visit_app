@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
-import { addCustomPlayer, removeCustomPlayer, loadCustomPlayers, FALLBACK_PHOTO } from '../data/players'
+import { addCustomPlayer, removeCustomPlayer, getAllPlayers, FALLBACK_PHOTO } from '../data/players'
 import './AddPlayer.css'
 
 const EMPTY_FORM = {
@@ -27,9 +27,19 @@ function fileToDataUrl(file) {
 
 export default function AddPlayer() {
   const [form, setForm] = useState(EMPTY_FORM)
-  const [customPlayers, setCustomPlayers] = useState(loadCustomPlayers)
+  const [customPlayers, setCustomPlayers] = useState([])
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+
+  async function reloadCustomPlayers() {
+    const [morocco, opponent] = await Promise.all([getAllPlayers('morocco'), getAllPlayers('opponent')])
+    setCustomPlayers([
+      ...morocco.filter(p => !p.isBuiltin).map(p => ({ ...p, team: 'morocco' })),
+      ...opponent.filter(p => !p.isBuiltin).map(p => ({ ...p, team: 'opponent' })),
+    ])
+  }
+
+  useEffect(() => { reloadCustomPlayers() }, [])
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -42,7 +52,7 @@ export default function AddPlayer() {
     setField('photo', dataUrl)
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.name.trim() || !form.position.trim()) {
       setError('Le nom et le poste du joueur sont obligatoires.')
@@ -63,16 +73,16 @@ export default function AddPlayer() {
       team: form.team,
     }
 
-    const updated = addCustomPlayer(player)
-    setCustomPlayers(updated)
+    await addCustomPlayer(player)
+    await reloadCustomPlayers()
     setForm(prev => ({ ...EMPTY_FORM, team: prev.team }))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
-  function handleDelete(name, team) {
-    const updated = removeCustomPlayer(name, team)
-    setCustomPlayers(updated)
+  async function handleDelete(id) {
+    await removeCustomPlayer(id)
+    await reloadCustomPlayers()
   }
 
   const moroccoPlayers = customPlayers.filter(p => p.team === 'morocco')
@@ -175,8 +185,8 @@ export default function AddPlayer() {
             ) : (
               <div className="ap-player-grid">
                 {moroccoPlayers.map(p => (
-                  <div key={p.name} className="ap-player-card">
-                    <button className="ap-player-del" onClick={() => handleDelete(p.name, p.team)} title="Supprimer">×</button>
+                  <div key={p.id} className="ap-player-card">
+                    <button className="ap-player-del" onClick={() => handleDelete(p.id)} title="Supprimer">×</button>
                     <img src={p.photo} alt={p.name} onError={e => { e.target.src = FALLBACK_PHOTO }} />
                     <div className="ap-pc-name">{p.name}</div>
                     <div className="ap-pc-pos">{p.position}</div>
@@ -196,8 +206,8 @@ export default function AddPlayer() {
             ) : (
               <div className="ap-player-grid">
                 {opponentPlayersList.map(p => (
-                  <div key={p.name} className="ap-player-card">
-                    <button className="ap-player-del" onClick={() => handleDelete(p.name, p.team)} title="Supprimer">×</button>
+                  <div key={p.id} className="ap-player-card">
+                    <button className="ap-player-del" onClick={() => handleDelete(p.id)} title="Supprimer">×</button>
                     <img src={p.photo} alt={p.name} onError={e => { e.target.src = FALLBACK_PHOTO }} />
                     <div className="ap-pc-name">{p.name}</div>
                     <div className="ap-pc-pos">{p.position}</div>

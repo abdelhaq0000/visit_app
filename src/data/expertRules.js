@@ -1,5 +1,3 @@
-const STORAGE_KEY = 'football_dashboard_expert_rules'
-
 // ── Metrics actually captured by the wearable tracker (GPS + MPU6050) ──
 // Same fields as sessionStats/sensor/zoneStats in PlayerPerformance.jsx
 export const TRACKING_METRICS = [
@@ -63,41 +61,36 @@ export const LOGIC_OPS = [
   { value: 'OR',  label: 'OU (OR)' },
 ]
 
-function readAll() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch (_) {
-    return []
-  }
-}
-
-function writeAll(rules) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rules))
-}
-
-export function getAllRules() {
-  return readAll()
-}
-
+// ── Rules are served by the backend API (server/routes/rules.js) ──
 // rule = { conditions: [{ metric, op, value }, ...], logic: 'AND' | 'OR', recommendation: '...' }
-export function addRule(rule) {
-  const rules = readAll()
-  rules.push({ ...rule, id: `${Date.now()}_${Math.random().toString(16).slice(2, 8)}`, enabled: true })
-  writeAll(rules)
-  return rules
+
+export async function getAllRules() {
+  const res = await fetch('/api/rules')
+  if (!res.ok) throw new Error('Failed to load rules')
+  return res.json()
 }
 
-export function deleteRule(id) {
-  const rules = readAll().filter(r => r.id !== id)
-  writeAll(rules)
-  return rules
+export async function addRule(rule) {
+  const res = await fetch('/api/rules', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rule),
+  })
+  if (!res.ok) throw new Error('Failed to add rule')
+  await res.json()
+  return getAllRules()
 }
 
-export function toggleRule(id) {
-  const rules = readAll().map(r => r.id === id ? { ...r, enabled: !r.enabled } : r)
-  writeAll(rules)
-  return rules
+export async function deleteRule(id) {
+  const res = await fetch(`/api/rules/${id}`, { method: 'DELETE' })
+  if (!res.ok && res.status !== 404) throw new Error('Failed to delete rule')
+  return getAllRules()
+}
+
+export async function toggleRule(id) {
+  const res = await fetch(`/api/rules/${id}`, { method: 'PATCH' })
+  if (!res.ok) throw new Error('Failed to toggle rule')
+  return getAllRules()
 }
 
 export function metricLabel(value) {

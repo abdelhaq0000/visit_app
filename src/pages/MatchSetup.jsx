@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import { players as squadPlayers, FALLBACK_PHOTO } from '../data/players'
+import { getAllPlayers, FALLBACK_PHOTO } from '../data/players'
+import { createMatch, updateMatch, startMatch } from '../data/matches'
 import './MatchSetup.css'
 
 // ── Formations ─────────────────────────────────────────────
@@ -97,7 +98,7 @@ const ROLE_LABELS = {
   AV: 'Avant-Centre',
 }
 
-function autoAssign(formationKey) {
+function autoAssign(formationKey, squadPlayers) {
   const formation = FORMATIONS[formationKey]
   const used = new Set()
   return formation.positions.map(pos => {
@@ -205,7 +206,7 @@ function MatchSidebar({ matchInfo, formationKey, assignments, corners, onSave, o
 }
 
 // ── Formation canvas ───────────────────────────────────────
-function FormationCanvas({ formationKey, assignments }) {
+function FormationCanvas({ formationKey, assignments, squadPlayers }) {
   const canvasRef = useRef(null)
   const formation = FORMATIONS[formationKey]
 
@@ -266,7 +267,7 @@ function FormationCanvas({ formationKey, assignments }) {
       ctx.font = '7.5px sans-serif'
       ctx.fillText(shortName, px, py + 27)
     })
-  }, [formationKey, assignments, formation])
+  }, [formationKey, assignments, formation, squadPlayers])
 
   return <canvas ref={canvasRef} width={560} height={360} className="ms-formation-canvas" />
 }
@@ -321,6 +322,8 @@ const EMPTY_CORNERS = {
 export default function MatchSetup() {
   const navigate = useNavigate()
   const [saved, setSaved] = useState(false)
+  const [matchId, setMatchId] = useState(null)
+  const [squadPlayers, setSquadPlayers] = useState([])
 
   const [matchInfo, setMatchInfo] = useState({
     name: 'Maroc vs Adversaire',
@@ -331,9 +334,20 @@ export default function MatchSetup() {
 
   const [corners, setCorners]         = useState(EMPTY_CORNERS)
   const [formationKey, setFormationKey] = useState('4-3-3')
-  const [assignments, setAssignments]   = useState(() => autoAssign('4-3-3'))
+  const [assignments, setAssignments]   = useState([])
 
-  useEffect(() => { setAssignments(autoAssign(formationKey)) }, [formationKey])
+  useEffect(() => {
+    getAllPlayers('morocco').then(list => {
+      setSquadPlayers(list)
+      setAssignments(autoAssign('4-3-3', list))
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!squadPlayers.length) return
+    setAssignments(autoAssign(formationKey, squadPlayers))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formationKey])
 
   function setCorner(corner, field, value) {
     setCorners(prev => ({ ...prev, [corner]: { ...prev[corner], [field]: value } }))
@@ -343,13 +357,21 @@ export default function MatchSetup() {
     setAssignments(prev => prev.map((v, idx) => idx === i ? value : v))
   }
 
-  function handleSave() {
-    localStorage.setItem('matchConfig', JSON.stringify({ matchInfo, corners, formation: formationKey, assignments, savedAt: new Date().toISOString() }))
+  async function handleSave() {
+    const payload = { matchInfo, corners, formation: formationKey, assignments }
+    const row = matchId ? await updateMatch(matchId, payload) : await createMatch(payload)
+    setMatchId(row.id)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
-  function handleStart() { handleSave(); navigate('/players') }
+  async function handleStart() {
+    const payload = { matchInfo, corners, formation: formationKey, assignments }
+    const row = matchId ? await updateMatch(matchId, payload) : await createMatch(payload)
+    setMatchId(row.id)
+    await startMatch(row.id)
+    navigate('/players')
+  }
 
   const formation = FORMATIONS[formationKey]
 
@@ -460,7 +482,7 @@ export default function MatchSetup() {
 
             <div className="ms-formation-layout">
               <div className="ms-formation-canvas-wrap">
-                <FormationCanvas formationKey={formationKey} assignments={assignments} />
+                <FormationCanvas formationKey={formationKey} assignments={assignments} squadPlayers={squadPlayers} />
                 <div className="ms-canvas-legend">
                   <span><span className="ms-cl-dot ms-cl-squad" /> Joueur de l'équipe</span>
                   <span><span className="ms-cl-dot ms-cl-custom" /> Joueur personnalisé</span>

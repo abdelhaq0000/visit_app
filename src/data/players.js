@@ -1,145 +1,27 @@
-export const players = [
-  {
-    name: 'Achraf Hakimi',
-    position: 'Right Back / Wing Back',
-    jersey: '#2',
-    club: 'PSG',
-    nationality: 'Morocco',
-    age: '25 yrs',
-    height: '181 cm',
-    weight: '73 kg',
-    photo: 'https://store.frmf.ma/cdn/shop/files/2_ACHRAF_HAKIMI_Away_2048x2048.webp?v=1781021899',
-  },
-  {
-    name: 'Yassine Bounou',
-    position: 'Goalkeeper',
-    jersey: '#1',
-    club: 'Al-Hilal',
-    nationality: 'Morocco',
-    age: '33 yrs',
-    height: '192 cm',
-    weight: '83 kg',
-    photo: 'https://sponsor.frmf.ma/_next/image?url=https%3A%2F%2Fsponsor.frmf.ma%2Fapi%2Fmedia%2Ffile%2Fgoalkeeper%2520in%2520blue%2520jersey.png%3F2025-09-22T14%253A08%253A51.088Z&w=1920&q=100',
-  },
-  {
-    name: 'Ismail Saibari',
-    position: 'Attacking Midfielder',
-    jersey: '#11',
-    club: 'Galatasaray',
-    nationality: 'Morocco',
-    age: '24 yrs',
-    height: '181 cm',
-    weight: '76 kg',
-    photo: 'https://store.frmf.ma/cdn/shop/files/11_ISMAEL_SAIBARI_8724a33b-c3b1-4dc9-ba6f-b3dba7adb274_2048x2048.webp?v=1781408332',
-  },
-  {
-    name: 'Bilal El Khannouss',
-    position: 'Midfielder',
-    jersey: '#23',
-    club: 'Leicester',
-    nationality: 'Morocco',
-    age: '20 yrs',
-    height: '180 cm',
-    weight: '74 kg',
-    photo: 'https://store.frmf.ma/cdn/shop/files/23_BILAL_EL_KHANNOUSS_5cff16b0-a0a3-415c-a603-550fa6e0fb9e_2048x2048.webp?v=1781408332',
-  },
-  {
-    name: 'Soufiane Rahimi',
-    position: 'Attacker',
-    jersey: '#9',
-    club: 'Al-Ittihad',
-    nationality: 'Morocco',
-    age: '28 yrs',
-    height: '183 cm',
-    weight: '78 kg',
-    photo: 'https://store.frmf.ma/cdn/shop/files/9_SOUFIANE_RAHIMI_fd4eb49b-50d1-4ce4-ba2c-f9525c6da37d_2048x2048.webp?v=1781408332',
-  },
-  {
-    name: 'Noussair Mazraoui',
-    position: 'Right Back',
-    jersey: '#3',
-    club: 'Bayern Munich',
-    nationality: 'Morocco',
-    age: '26 yrs',
-    height: '183 cm',
-    weight: '75 kg',
-    photo: 'https://store.frmf.ma/cdn/shop/files/3_NOUSSAIR_MAZRAOUI.webp',
-  },
-]
-
-export const opponentPlayers = [
-  {
-    name: 'Mike Maignan',
-    position: 'Goalkeeper',
-    jersey: '#1',
-    club: 'AC Milan',
-    nationality: 'France',
-    age: '30 yrs',
-    height: '191 cm',
-    weight: '80 kg',
-    photo: 'https://fff.twic.pics/https://media.fff.fr/uploads/images/932290dc27718ee1faef74bd6a4a6573.png?twic=v1/focus=432x192/cover=380x296',
-  },
-  {
-    name: 'Kylian Mbappe',
-    position: 'Forward',
-    jersey: '#10',
-    club: 'Real Madrid',
-    nationality: 'France',
-    age: '27 yrs',
-    height: '178 cm',
-    weight: '73 kg',
-    photo: 'https://fff.twic.pics/https://media.fff.fr/uploads/images/6603fdc34dc59cdc97f993a1260e5432.png?twic=v1/focus=377x206/cover=380x296',
-  },
-  
-  {
-    name: 'Ousmane Dembele',
-    position: 'Forward',
-    jersey: '#11',
-    club: 'PSG',
-    nationality: 'France',
-    age: '28 yrs',
-    height: '178 cm',
-    weight: '67 kg',
-    photo: 'https://fff.twic.pics/https://media.fff.fr/uploads/images/564683a99ff82dbb62982478c185ced9.png?twic=v1/focus=377x221/cover=380x296',
-  },
-]
-
 export const FALLBACK_PHOTO =
   'https://store.frmf.ma/cdn/shop/files/2_ACHRAF_HAKIMI_Away_2048x2048.webp?v=1781021899'
 
-// ── Custom players added from the "Ajouter un joueur" page ──
-// Stored in localStorage so they persist across reloads and are
-// merged into the squad/opponent lists used across the app.
-const CUSTOM_PLAYERS_KEY = 'customPlayers'
+// ── Players are served by the backend API (server/routes/players.js) ──
+// Built-in squads are seeded into the database on first run; custom
+// players added from "Ajouter un joueur" are stored alongside them.
 
-export function loadCustomPlayers() {
-  try {
-    const raw = localStorage.getItem(CUSTOM_PLAYERS_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch (_) {
-    return []
-  }
+export async function getAllPlayers(team) {
+  const res = await fetch(`/api/players?team=${encodeURIComponent(team)}`)
+  if (!res.ok) throw new Error('Failed to load players')
+  return res.json()
 }
 
-function saveCustomPlayers(list) {
-  localStorage.setItem(CUSTOM_PLAYERS_KEY, JSON.stringify(list))
+export async function addCustomPlayer(player) {
+  const res = await fetch('/api/players', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(player),
+  })
+  if (!res.ok) throw new Error('Failed to add player')
+  return res.json()
 }
 
-export function addCustomPlayer(player) {
-  const list = loadCustomPlayers()
-  list.push(player)
-  saveCustomPlayers(list)
-  return list
-}
-
-export function removeCustomPlayer(name, team) {
-  const list = loadCustomPlayers().filter(p => !(p.name === name && p.team === team))
-  saveCustomPlayers(list)
-  return list
-}
-
-export function getAllPlayers(team) {
-  const base = team === 'opponent' ? opponentPlayers : players
-  const custom = loadCustomPlayers().filter(p => p.team === team)
-  return [...base, ...custom]
+export async function removeCustomPlayer(id) {
+  const res = await fetch(`/api/players/${id}`, { method: 'DELETE' })
+  if (!res.ok && res.status !== 404) throw new Error('Failed to delete player')
 }

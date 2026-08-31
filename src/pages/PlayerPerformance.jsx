@@ -3,8 +3,10 @@ import mqtt from 'mqtt'
 import Chart from 'chart.js/auto'
 import Navbar from '../components/Navbar'
 import PlayerSidebar from '../components/PlayerSidebar'
-import { players, FALLBACK_PHOTO } from '../data/players'
-import { saveWearableSession } from '../data/history'
+import { getAllPlayers, FALLBACK_PHOTO } from '../data/players'
+import { getSessionsForPlayer } from '../data/history'
+import { getActiveMatch } from '../data/matches'
+import { generateMatchReportPdf } from '../lib/matchReport'
 import './PlayerPerformance.css'
 
 const MAX_ACC_HISTORY = 120
@@ -12,6 +14,13 @@ const MAX_ACC_HISTORY = 120
 // ── MQTT defaults — same broker/topic convention as the standalone hh.html tracker dashboard ──
 const DEFAULT_BROKER_URL = 'wss://broker.hivemq.com:8884/mqtt'
 const DEFAULT_TOPIC_ROOT = 'football/tracker/test-rabab-2026'
+
+// ── Tagger live-tag topic root — same broker/connection, published by Tagger.jsx ──
+const TAGGER_TOPIC_ROOT = 'football/tagger'
+
+function slugifyPlayerName(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
 
 const MAX_CHART_POINTS = 40
 
@@ -90,6 +99,20 @@ const ACTION_COLORS = {
   'Goal': '#f9a825', 'Assist': '#aed581', 'Foul': '#e53935',
 }
 const FIELD_ACTIONS = Object.keys(ACTION_COLORS)
+
+// Libellés d'affichage FR pour les actions taguées (mêmes clés que Tagger.jsx)
+const ACTION_LABELS = {
+  'Short Pass': 'Passe courte', 'Long Pass': 'Passe longue', Cross: 'Centre', Shot: 'Tir',
+  Header: 'Tête', Dribble: 'Dribble', 'First Touch': 'Contrôle',
+  Tackle: 'Tacle', Interception: 'Interception', Block: 'Contre', Clearance: 'Dégagement', Pressing: 'Pressing',
+  Goal: 'But', Assist: 'Passe décisive', Foul: 'Faute',
+  'Yellow Card': 'Carton jaune', Corner: 'Corner', 'Free Kick': 'Coup franc',
+}
+const actionLabel = (a) => ACTION_LABELS[a] || a
+
+function formatSessionDate(iso) {
+  return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+}
 
 // ── Position zone per player role ─────────────────────────
 function getZoneForPosition(pos) {
@@ -310,6 +333,149 @@ function FieldHeatmap({ positions, currentPos, alertZones, tagEvents, playerZone
   return <canvas ref={canvasRef} width={840} height={543} className="pp-field-canvas" />
 }
 
+// ── Collapsible panel shell — used for Tagger events, wearable sessions & live sensor data ──
+function CollapsiblePanel({ title, count, open, onToggle, children }) {
+  return (
+    <section className="pp-collapse-panel">
+      <button type="button" className="pp-collapse-head" onClick={onToggle} aria-expanded={open}>
+        <span className="pp-collapse-title">
+          {title}
+          {count !== undefined && <span className="pp-collapse-count">{count}</span>}
+        </span>
+        <span className={`pp-collapse-chevron${open ? ' open' : ''}`}>▼</span>
+      </button>
+      {open && <div className="pp-collapse-body">{children}</div>}
+    </section>
+  )
+}
+
+// ── Tagger sessions panel — actions tagged for this player via Tagger.jsx ──
+// Shows the live match stream (if a match is in progress) above past saved sessions.
+function TaggerSessionsPanel({ sessions, liveTags, isLive, open, onToggle }) {
+  const [openId, setOpenId] = useState(null)
+  const totalCount = sessions.length + (isLive ? liveTags.length : 0)
+
+  return (
+    <CollapsiblePanel title="Actions Taguées (Tagger)" count={totalCount} open={open} onToggle={onToggle}>
+      {isLive && (
+        <div className="pp-live-tags-block">
+          <div className="pp-live-tags-title">
+            <span className="pp-chat-live-dot" /> En direct — {liveTags.length} action(s) cette session
+          </div>
+          {liveTags.length === 0 ? (
+            <div className="pp-collapse-empty">En attente des premières actions taguées…</div>
+          ) : (
+            <div className="pp-live-tags-list">
+              {[...liveTags].reverse().map((t) => (
+                <div key={t.id} className="pp-live-tag-item">
+                  <span className="pp-live-tag-time">{t.time}</span>
+                  <span className="pp-live-tag-action">{actionLabel(t.action)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {sessions.length === 0 ? (
+        <div className="pp-collapse-empty">Aucune session de tagging enregistrée pour ce joueur. Utilisez « Enregistrer &amp; Terminer » dans le Tagger.</div>
+      ) : (
+        <div className="pp-session-list">
+          {sessions.map((s) => {
+            const isOpen = openId === s.id
+            return (
+              <div key={s.id} className={`pp-session-card${isOpen ? ' open' : ''}`}>
+                <div className="pp-session-row" onClick={() => setOpenId(isOpen ? null : s.id)}>
+                  <span className="pp-session-date">{formatSessionDate(s.date)}</span>
+                  <span className="pp-session-stats">
+                    <span className="pp-session-stat">{s.summary?.goals ?? 0} but(s)</span>
+                    <span className="pp-session-stat">{s.summary?.assists ?? 0} passe(s) déc.</span>
+                    <span className="pp-session-stat">{s.summary?.totalEvents ?? s.events?.length ?? 0} action(s)</span>
+                  </span>
+                  <span className={`pp-session-team-chip ${s.teamKey}`}>{s.teamKey === 'opponent' ? 'Adverse' : 'Maroc'}</span>
+                  <span className="pp-session-chevron">{isOpen ? '▲' : '▼'}</span>
+                </div>
+                {isOpen && (
+                  <div className="pp-session-detail">
+                    <table className="pp-session-table">
+                      <thead>
+                        <tr><th>Heure</th><th>Action</th></tr>
+                      </thead>
+                      <tbody>
+                        {(s.events || []).map((e) => (
+                          <tr key={e.id}>
+                            <td>{e.time}</td>
+                            <td>{actionLabel(e.action)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </CollapsiblePanel>
+  )
+}
+
+// ── Wearable sessions panel — GPS/MPU sessions saved from this page ──
+function WearableSessionsPanel({ sessions, open, onToggle }) {
+  const [openId, setOpenId] = useState(null)
+
+  return (
+    <CollapsiblePanel title="Sessions Capteur (Wearable)" count={sessions.length} open={open} onToggle={onToggle}>
+      {sessions.length === 0 ? (
+        <div className="pp-collapse-empty">Aucune session capteur enregistrée pour ce joueur. Cliquez « Enregistrer la session » une fois des données captées.</div>
+      ) : (
+        <div className="pp-session-list">
+          {sessions.map((s) => {
+            const isOpen = openId === s.id
+            return (
+              <div key={s.id} className={`pp-session-card${isOpen ? ' open' : ''}`}>
+                <div className="pp-session-row" onClick={() => setOpenId(isOpen ? null : s.id)}>
+                  <span className="pp-session-date">{formatSessionDate(s.date)}</span>
+                  <span className="pp-session-stats">
+                    <span className="pp-session-stat">{s.sessionStats?.maxSpeed} km/h max</span>
+                    <span className="pp-session-stat">{s.sessionStats?.dist} km</span>
+                    <span className="pp-session-stat">{s.sessionStats?.temp}°C</span>
+                    <span className="pp-session-stat">{s.alertsLog?.length || 0} alerte(s)</span>
+                  </span>
+                  <span className="pp-session-chevron">{isOpen ? '▲' : '▼'}</span>
+                </div>
+                {isOpen && (
+                  <div className="pp-session-detail">
+                    <div className="pp-session-report-grid">
+                      <div className="pp-session-report-item"><span>Vitesse max</span><strong>{s.sessionStats?.maxSpeed} km/h</strong></div>
+                      <div className="pp-session-report-item"><span>Distance</span><strong>{s.sessionStats?.dist} km</strong></div>
+                      <div className="pp-session-report-item"><span>Température</span><strong>{s.sessionStats?.temp} °C</strong></div>
+                      <div className="pp-session-report-item"><span>Satellites</span><strong>{s.sessionStats?.sats}</strong></div>
+                      <div className="pp-session-report-item"><span>Camp propre</span><strong>{s.zoneStats?.ownHalf ?? 0}</strong></div>
+                      <div className="pp-session-report-item"><span>Milieu</span><strong>{s.zoneStats?.midfield ?? 0}</strong></div>
+                      <div className="pp-session-report-item"><span>Camp adverse</span><strong>{s.zoneStats?.oppHalf ?? 0}</strong></div>
+                      <div className="pp-session-report-item"><span>Actions taguées</span><strong>{s.tagHistory?.length || 0}</strong></div>
+                    </div>
+                    {s.alertsLog?.length > 0 && (
+                      <div className="pp-session-alerts">
+                        {s.alertsLog.map((a, i) => (
+                          <div key={i} className={`pp-session-alert-item pp-alert-${a.level}`}>
+                            <span>{a.time}</span> — {a.msg}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </CollapsiblePanel>
+  )
+}
+
 // ── Expected zone occupancy per role (reference %) ─────────
 const ROLE_ZONE_TARGET = {
   'Goalkeeper':        { own: 85, mid: 14, opp: 1  },
@@ -495,9 +661,16 @@ function mergeSensorFromPayload(prev, data) {
 
 // ── Main page ──────────────────────────────────────────────
 export default function PlayerPerformance() {
+  const [players, setPlayers] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [pickerOpen, setPickerOpen]     = useState(false)
   const [sensor, setSensor]             = useState(null)
+  const [playerSessions, setPlayerSessions] = useState([])
+  const [taggerPanelOpen, setTaggerPanelOpen] = useState(false)
+  const [wearablePanelOpen, setWearablePanelOpen] = useState(false)
+  const [sensorPanelOpen, setSensorPanelOpen] = useState(false)
+  const [activeMatch, setActiveMatch] = useState(null)
+  const [liveTags, setLiveTags] = useState([])
   const [lastUpdate, setLastUpdate]     = useState('--:--:--')
   const [sessionStats, setSessionStats] = useState({ maxSpeed: '0.0', dist: '0.00', temp: '0.0', sats: '0' })
 
@@ -513,7 +686,6 @@ export default function PlayerPerformance() {
   const [chatInput, setChatInput] = useState('')
   const [accPoint, setAccPoint] = useState(null)
   const [accHistory, setAccHistory] = useState([])
-  const [alertsLog, setAlertsLog] = useState([])
 
   // ── MQTT broker connection — same broker/topic as hh.html, connects automatically ──
   const brokerUrl = DEFAULT_BROKER_URL
@@ -530,8 +702,12 @@ export default function PlayerPerformance() {
   const chatWasAtBottomRef = useRef(true)
   const mqttClientRef = useRef(null)
   const sensorRef      = useRef(null)
+  const playerRef      = useRef(null)
+  const activeMatchIdRef = useRef(null)
 
   const player = players[currentIndex]
+  playerRef.current = player
+  activeMatchIdRef.current = activeMatch?.id ?? null
 
   // Only auto-scroll the chat when the user hasn't scrolled up to read earlier messages
   useEffect(() => {
@@ -541,7 +717,40 @@ export default function PlayerPerformance() {
     }
   }, [chatMessages])
 
+  useEffect(() => { getAllPlayers('morocco').then(setPlayers) }, [])
+
+  function reloadPlayerSessions() {
+    if (!player) return
+    getSessionsForPlayer(player.name).then(setPlayerSessions)
+  }
+
+  useEffect(() => { reloadPlayerSessions() }, [player?.name])
+
+  // ── Live match polling — check for an active match every 5s ──
   useEffect(() => {
+    function poll() {
+      getActiveMatch().then(setActiveMatch).catch(() => setActiveMatch(null))
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => clearInterval(id)
+  }, [])
+
+  // ── Live tags arrive instantly via MQTT (see connectMqtt's message handler
+  // below) — this just resets the local list whenever the live match or the
+  // viewed player changes, and (re)subscribes to that player's tagger topic. ──
+  useEffect(() => {
+    setLiveTags([])
+    const client = mqttClientRef.current
+    if (!client || !activeMatch || !player) return
+
+    const topic = `${TAGGER_TOPIC_ROOT}/${activeMatch.id}/${slugifyPlayerName(player.name)}`
+    client.subscribe(topic, { qos: 0 })
+    return () => { try { client.unsubscribe(topic) } catch (_) {} }
+  }, [activeMatch?.id, player?.name, mqttStatus])
+
+  useEffect(() => {
+    if (!players.length) return
     maxSpeedRef.current   = 0
     totalDistRef.current  = 0
     lastSpeedRef.current  = 0
@@ -551,7 +760,6 @@ export default function PlayerPerformance() {
     setSensor(null)
     setAccPoint(null)
     setAccHistory([])
-    setAlertsLog([])
     setSessionStats({ maxSpeed: '0.0', dist: '0.00', temp: '0.0', sats: '0' })
     setActiveAlerts([])
     setTagHistory([])
@@ -564,10 +772,11 @@ export default function PlayerPerformance() {
     const lastPos = initPos[initPos.length - 1]
     setCurrentFieldPos(lastPos)
     fieldPosRef.current = lastPos
-  }, [currentIndex])
+  }, [currentIndex, players])
 
   // ── Process one merged sensor reading — drives heatmap, zones, tags and alerts ──
   function processReading(data) {
+    if (!players.length) return
     const { gps, mpu } = data
     if (gps.speed > maxSpeedRef.current) maxSpeedRef.current = gps.speed
     totalDistRef.current += ((lastSpeedRef.current + gps.speed) / 2) * (1.5 / 3600)
@@ -626,13 +835,6 @@ export default function PlayerPerformance() {
     if (posStr.includes('Attacker') && newPos.x < 30)
       alerts.push({ type: 'tactical', msg: 'Attaquant dans camp propre', level: 'yellow' })
     setActiveAlerts(alerts)
-    if (alerts.length) {
-      const time = new Date().toLocaleTimeString()
-      setAlertsLog(prev => {
-        const u = [...prev, ...alerts.map(a => ({ ...a, time }))]
-        return u.length > 60 ? u.slice(-60) : u
-      })
-    }
   }
 
   // ── MQTT connection lifecycle — same broker/topic convention as hh.html ──
@@ -677,6 +879,17 @@ export default function PlayerPerformance() {
       } catch (_) {
         return
       }
+
+      if (topic.startsWith(`${TAGGER_TOPIC_ROOT}/`)) {
+        // Action taguée en direct par le Tagger — ne garder que celles du
+        // match/joueur actuellement affichés (le topic est déjà scopé par
+        // matchId+joueur, mais on revérifie car une resubscription est asynchrone).
+        if (data.matchId !== activeMatchIdRef.current) return
+        if (!playerRef.current || data.playerName !== playerRef.current.name) return
+        setLiveTags(prev => [...prev, data])
+        return
+      }
+
       const merged = mergeSensorFromPayload(sensorRef.current, data)
       sensorRef.current = merged
       processReading(merged)
@@ -715,21 +928,17 @@ export default function PlayerPerformance() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function handleSaveSession() {
-    if (!accHistory.length && !fieldPositions.length) {
-      alert('Aucune donnée capteur encore captée — connectez le tracker et attendez les relevés.')
-      return
-    }
-    saveWearableSession({
+  async function handleDownloadReport() {
+    const taggerSessionsForReport = playerSessions.filter(s => s.kind === 'tagging')
+    const heatmapCanvas = document.querySelector('.pp-field-canvas')
+    await generateMatchReportPdf({
       player,
       sessionStats,
       accHistory,
-      fieldPositions,
-      zoneStats,
-      alertsLog,
-      tagHistory,
+      taggerSessions: taggerSessionsForReport,
+      heatmapCanvas,
+      opponentName: 'France',
     })
-    setChatMessages(prev => [...prev, { role: 'ai', text: '✓ Session sauvegardée dans l\'historique.' }])
   }
 
   function sendChat(e) {
@@ -748,18 +957,34 @@ export default function PlayerPerformance() {
     ? Math.sqrt(sensor.mpu.accX ** 2 + sensor.mpu.accY ** 2 + sensor.mpu.accZ ** 2)
     : 0
 
+  function handlePrev() { setCurrentIndex((currentIndex - 1 + players.length) % players.length) }
+  function handleNext() { setCurrentIndex((currentIndex + 1) % players.length) }
+
+  if (!player) {
+    return (
+      <div className="pp-page">
+        <Navbar title="Performance du Joueur" />
+        <div className="pp-layout">
+          <main className="pp-main">
+            <p style={{ padding: 24 }}>Chargement des joueurs…</p>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
   const playerZone = getZoneForPosition(player.position)
   const alertZones = getAlertZones(player.position)
   const positionInsights = buildPositionInsights({ zoneStats, tagHistory, player, activeAlerts })
 
-  function handlePrev() { setCurrentIndex((currentIndex - 1 + players.length) % players.length) }
-  function handleNext() { setCurrentIndex((currentIndex + 1) % players.length) }
+  const taggerSessions = playerSessions.filter(s => s.kind === 'tagging')
+  const wearableSessions = playerSessions.filter(s => s.kind === 'wearable')
 
   return (
     <div className="pp-page">
       <Navbar
         title="Performance du Joueur"
-        right={<button type="button" className="pp-save-session-btn" onClick={handleSaveSession}>&#128190; Enregistrer la session</button>}
+        right={<button type="button" className="pp-save-session-btn" onClick={handleDownloadReport}>&#11015; Télécharger le rapport</button>}
       />
 
       {pickerOpen && (
@@ -797,8 +1022,6 @@ export default function PlayerPerformance() {
         />
 
         <main className="pp-main">
-          <h2 className="pp-section-title">Données Capteur en Temps Réel</h2>
-
           <div className="pp-broker-panel">
             <div className={`pp-broker-status pp-broker-status-${mqttStatus}`}>
               <span className="pp-broker-dot" />
@@ -815,60 +1038,6 @@ export default function PlayerPerformance() {
             <div className="pp-status-item">Broker : <span className={mqttStatus === 'connected' ? 'ok' : 'bad'}>{mqttStatusText}</span></div>
             <div className="pp-status-item">Dernière mise à jour : <span className="ok">{lastUpdate}</span></div>
           </div>
-
-          <section className="pp-cards">
-            <div className="pp-card">
-              <h3>Vitesse GPS</h3>
-              <h2>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'}</h2>
-              <p>km/h</p>
-            </div>
-            <div className="pp-card">
-              <h3>Altitude</h3>
-              <h2>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'}</h2>
-              <p>mètres</p>
-            </div>
-            <div className="pp-card">
-              <h3>Satellites</h3>
-              <h2>{sensor ? sensor.gps.satellites : '0'}</h2>
-              <p>qualité du signal GPS</p>
-            </div>
-            <div className="pp-card">
-              <h3>Intensité du mouvement</h3>
-              <h2>{movement.toFixed(2)}</h2>
-              <p>magnitude d'accélération</p>
-            </div>
-          </section>
-
-          <section className="pp-wide-section">
-            <div className="pp-panel">
-              <h3>Données GPS</h3>
-              <div className="pp-data-line"><span>Latitude</span><strong>{sensor ? sensor.gps.lat.toFixed(6) : '0.000000'}</strong></div>
-              <div className="pp-data-line"><span>Longitude</span><strong>{sensor ? sensor.gps.lng.toFixed(6) : '0.000000'}</strong></div>
-              <div className="pp-data-line"><span>Vitesse</span><strong>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'} km/h</strong></div>
-              <div className="pp-data-line"><span>Altitude</span><strong>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'} m</strong></div>
-              <div className="pp-data-line"><span>Satellites</span><strong>{sensor ? sensor.gps.satellites : '0'}</strong></div>
-            </div>
-            <div className="pp-panel">
-              <h3>Données MPU6050</h3>
-              <div className="pp-data-line"><span>Accélération X</span><strong>{sensor ? sensor.mpu.accX.toFixed(2) : '0.00'} m/s&#178;</strong></div>
-              <div className="pp-data-line"><span>Accélération Y</span><strong>{sensor ? sensor.mpu.accY.toFixed(2) : '0.00'} m/s&#178;</strong></div>
-              <div className="pp-data-line"><span>Accélération Z</span><strong>{sensor ? sensor.mpu.accZ.toFixed(2) : '0.00'} m/s&#178;</strong></div>
-              <div className="pp-data-line"><span>Gyroscope X</span><strong>{sensor ? sensor.mpu.gyroX.toFixed(2) : '0.00'} rad/s</strong></div>
-              <div className="pp-data-line"><span>Gyroscope Y</span><strong>{sensor ? sensor.mpu.gyroY.toFixed(2) : '0.00'} rad/s</strong></div>
-              <div className="pp-data-line"><span>Gyroscope Z</span><strong>{sensor ? sensor.mpu.gyroZ.toFixed(2) : '0.00'} rad/s</strong></div>
-              <div className="pp-data-line"><span>Température</span><strong>{sensor ? sensor.mpu.temperature.toFixed(2) : '0.00'} &#176;C</strong></div>
-            </div>
-          </section>
-
-          <section className="pp-panel pp-chart-panel">
-            <div className="pp-chart-panel-head">
-              <h3>Accélération</h3>
-              <span className="pp-chart-unit">m/s²</span>
-            </div>
-            <div className="pp-chart-wrap">
-              <AccelerationChart point={accPoint} />
-            </div>
-          </section>
 
           {/* ── Terrain + Heatmap + Chat ── */}
           <section className="pp-field-section">
@@ -978,7 +1147,80 @@ export default function PlayerPerformance() {
             </div>
           </section>
 
-          
+          {/* ── Historique du joueur : actions taguées + sessions capteur (repliables) ── */}
+          <TaggerSessionsPanel
+            sessions={taggerSessions}
+            liveTags={liveTags}
+            isLive={!!activeMatch}
+            open={taggerPanelOpen}
+            onToggle={() => setTaggerPanelOpen(o => !o)}
+          />
+          <WearableSessionsPanel
+            sessions={wearableSessions}
+            open={wearablePanelOpen}
+            onToggle={() => setWearablePanelOpen(o => !o)}
+          />
+
+          {/* ── Données Capteur (infos supplémentaires, repliable) ── */}
+          <CollapsiblePanel
+            title="Données Capteur en Temps Réel"
+            open={sensorPanelOpen}
+            onToggle={() => setSensorPanelOpen(o => !o)}
+          >
+            <section className="pp-cards">
+              <div className="pp-card">
+                <h3>Vitesse GPS</h3>
+                <h2>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'}</h2>
+                <p>km/h</p>
+              </div>
+              <div className="pp-card">
+                <h3>Altitude</h3>
+                <h2>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'}</h2>
+                <p>mètres</p>
+              </div>
+              <div className="pp-card">
+                <h3>Satellites</h3>
+                <h2>{sensor ? sensor.gps.satellites : '0'}</h2>
+                <p>qualité du signal GPS</p>
+              </div>
+              <div className="pp-card">
+                <h3>Intensité du mouvement</h3>
+                <h2>{movement.toFixed(2)}</h2>
+                <p>magnitude d'accélération</p>
+              </div>
+            </section>
+
+            <section className="pp-wide-section">
+              <div className="pp-panel">
+                <h3>Données GPS</h3>
+                <div className="pp-data-line"><span>Latitude</span><strong>{sensor ? sensor.gps.lat.toFixed(6) : '0.000000'}</strong></div>
+                <div className="pp-data-line"><span>Longitude</span><strong>{sensor ? sensor.gps.lng.toFixed(6) : '0.000000'}</strong></div>
+                <div className="pp-data-line"><span>Vitesse</span><strong>{sensor ? sensor.gps.speed.toFixed(2) : '0.00'} km/h</strong></div>
+                <div className="pp-data-line"><span>Altitude</span><strong>{sensor ? sensor.gps.altitude.toFixed(2) : '0.00'} m</strong></div>
+                <div className="pp-data-line"><span>Satellites</span><strong>{sensor ? sensor.gps.satellites : '0'}</strong></div>
+              </div>
+              <div className="pp-panel">
+                <h3>Données MPU6050</h3>
+                <div className="pp-data-line"><span>Accélération X</span><strong>{sensor ? sensor.mpu.accX.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+                <div className="pp-data-line"><span>Accélération Y</span><strong>{sensor ? sensor.mpu.accY.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+                <div className="pp-data-line"><span>Accélération Z</span><strong>{sensor ? sensor.mpu.accZ.toFixed(2) : '0.00'} m/s&#178;</strong></div>
+                <div className="pp-data-line"><span>Gyroscope X</span><strong>{sensor ? sensor.mpu.gyroX.toFixed(2) : '0.00'} rad/s</strong></div>
+                <div className="pp-data-line"><span>Gyroscope Y</span><strong>{sensor ? sensor.mpu.gyroY.toFixed(2) : '0.00'} rad/s</strong></div>
+                <div className="pp-data-line"><span>Gyroscope Z</span><strong>{sensor ? sensor.mpu.gyroZ.toFixed(2) : '0.00'} rad/s</strong></div>
+                <div className="pp-data-line"><span>Température</span><strong>{sensor ? sensor.mpu.temperature.toFixed(2) : '0.00'} &#176;C</strong></div>
+              </div>
+            </section>
+
+            <section className="pp-panel pp-chart-panel">
+              <div className="pp-chart-panel-head">
+                <h3>Accélération</h3>
+                <span className="pp-chart-unit">m/s²</span>
+              </div>
+              <div className="pp-chart-wrap">
+                <AccelerationChart point={accPoint} />
+              </div>
+            </section>
+          </CollapsiblePanel>
 
           <footer className="pp-footer">Système de Suivi des Joueurs de Football</footer>
         </main>

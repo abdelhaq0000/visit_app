@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import {
   METRIC_GROUPS, OPERATORS, LOGIC_OPS,
@@ -10,9 +10,11 @@ const EMPTY_CONDITION = { metric: 'vitesse', op: '>', value: '' }
 const EMPTY_FORM = { conditions: [{ ...EMPTY_CONDITION }], logic: 'AND', recommendation: '' }
 
 export default function ExpertSystem() {
-  const [rules, setRules] = useState(getAllRules)
+  const [rules, setRules] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [error, setError] = useState('')
+
+  useEffect(() => { getAllRules().then(setRules) }, [])
 
   function updateCondition(idx, field, value) {
     setForm(prev => ({
@@ -29,7 +31,7 @@ export default function ExpertSystem() {
     setForm(prev => ({ ...prev, conditions: prev.conditions.filter((_, i) => i !== idx) }))
   }
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault()
     if (form.conditions.some(c => c.value.toString().trim() === '')) {
       setError('Veuillez renseigner une valeur pour chaque condition.')
@@ -40,16 +42,16 @@ export default function ExpertSystem() {
       return
     }
     setError('')
-    setRules(addRule(form))
+    setRules(await addRule(form))
     setForm(EMPTY_FORM)
   }
 
-  function handleDelete(id) {
-    setRules(deleteRule(id))
+  async function handleDelete(id) {
+    setRules(await deleteRule(id))
   }
 
-  function handleToggle(id) {
-    setRules(toggleRule(id))
+  async function handleToggle(id) {
+    setRules(await toggleRule(id))
   }
 
   const activeCount = rules.filter(r => r.enabled).length

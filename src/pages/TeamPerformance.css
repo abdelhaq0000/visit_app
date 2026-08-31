@@ -311,6 +311,15 @@
   object-fit: contain;
 }
 
+/* Colonne de droite : alertes (haut) + chat (bas), même structure que PlayerPerformance */
+.tp-field-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  height: clamp(460px, 60vh, 680px);
+}
+
 .tp-fr-panel {
   background: #faf8f5;
   border: 1.5px solid #e0d0b0;
@@ -322,12 +331,57 @@
   min-height: 0;
 }
 
+/* Panneau alertes — hauteur automatique */
+.tp-fr-alerts {
+  flex: 0 0 auto;
+}
+
 /* Le panneau chat est borné pour que la liste des messages défile en interne */
 .tp-fr-chat {
+  flex: 1;
   min-height: 0;
   overflow: hidden;
-  height: clamp(420px, 52vh, 560px);
 }
+
+/* Badge du nombre d'alertes */
+.tp-alert-badge {
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #fff;
+}
+.tp-alert-badge-red { background: #d00000; }
+
+.tp-alerts-body {
+  overflow-y: auto;
+  max-height: 130px;
+}
+
+.tp-no-alert {
+  color: #2d9e2d;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 0;
+}
+
+.tp-alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tp-alert-item:last-child { margin-bottom: 0; }
+.tp-alert-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.tp-alert-red    { background: #fff0f0; border: 1px solid #ff4d4d; color: #b00000; }
+.tp-alert-orange { background: #fff4e8; border: 1px solid #ff9800; color: #c55600; }
+.tp-alert-yellow { background: #fffbe5; border: 1px solid #f0c000; color: #7a5900; }
 
 .tp-fr-title {
   display: flex;
@@ -472,9 +526,17 @@
 
 @media (max-width: 900px) {
   .tp-field-section { padding: 18px 16px; }
-  .tp-fr-chat { height: 360px; }
+  .tp-field-right { height: auto; flex-direction: row; }
+  .tp-fr-alerts { flex: 0 0 48%; }
+  .tp-fr-chat { flex: 1; height: 340px; }
   .tp-headline { flex-wrap: wrap; }
   .tp-headline-btn { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .tp-field-right { flex-direction: column; }
+  .tp-fr-alerts { flex: 0 0 auto; }
+  .tp-fr-chat { height: 320px; }
 }
 
 @media (max-width: 700px) {

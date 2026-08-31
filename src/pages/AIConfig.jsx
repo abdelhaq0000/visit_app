@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import {
   MODEL_TYPES, getAllConfigs, addConfig, deleteConfig, toggleConfig, formatFileSize,
@@ -15,9 +15,11 @@ const EMPTY_FORM = {
 }
 
 export default function AIConfig() {
-  const [configs, setConfigs] = useState(getAllConfigs)
+  const [configs, setConfigs] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [error, setError] = useState('')
+
+  useEffect(() => { getAllConfigs().then(setConfigs) }, [])
 
   function handleFileChange(e) {
     const file = e.target.files?.[0]
@@ -40,7 +42,7 @@ export default function AIConfig() {
     setForm(prev => ({ ...prev, classes: prev.classes.filter((_, i) => i !== idx) }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.name.trim()) {
       setError('Veuillez nommer ce modèle IA.')
@@ -65,16 +67,16 @@ export default function AIConfig() {
       }
     }
     setError('')
-    setConfigs(addConfig({ ...form, active: true }))
+    setConfigs(await addConfig({ ...form, active: true }))
     setForm(EMPTY_FORM)
   }
 
-  function handleDelete(id) {
-    setConfigs(deleteConfig(id))
+  async function handleDelete(id) {
+    setConfigs(await deleteConfig(id))
   }
 
-  function handleToggle(id) {
-    setConfigs(toggleConfig(id))
+  async function handleToggle(id) {
+    setConfigs(await toggleConfig(id))
   }
 
   return (

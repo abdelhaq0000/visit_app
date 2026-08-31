@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Chart from 'chart.js/auto'
 import Navbar from '../components/Navbar'
-import { players, opponentPlayers, FALLBACK_PHOTO } from '../data/players'
+import { getAllPlayers, FALLBACK_PHOTO } from '../data/players'
 import { getAllSessions, deleteSession } from '../data/history'
 import './History.css'
 
-const TEAMS = [
-  { key: 'us', label: 'Maroc', roster: players },
-  { key: 'opponent', label: 'France', roster: opponentPlayers },
+const TEAM_META = [
+  { key: 'us', label: 'Maroc', team: 'morocco' },
+  { key: 'opponent', label: 'France', team: 'opponent' },
 ]
 
 const CAT_CLS = { ball: 'tag-ball', def: 'tag-def', event: 'tag-event' }
@@ -105,11 +105,20 @@ function HistoryAccChart({ accHistory }) {
 }
 
 export default function History() {
-  const [sessions, setSessions] = useState(getAllSessions())
+  const [sessions, setSessions] = useState([])
+  const [rosters, setRosters] = useState({ us: [], opponent: [] })
   const [activeTeamKey, setActiveTeamKey] = useState('us')
   const [selectedPlayerName, setSelectedPlayerName] = useState(null)
   const [openSessionId, setOpenSessionId] = useState(null)
 
+  useEffect(() => { getAllSessions().then(setSessions) }, [])
+  useEffect(() => {
+    Promise.all([getAllPlayers('morocco'), getAllPlayers('opponent')]).then(([morocco, opponent]) => {
+      setRosters({ us: morocco, opponent })
+    })
+  }, [])
+
+  const TEAMS = TEAM_META.map(t => ({ ...t, roster: rosters[t.key] }))
   const activeTeam = TEAMS.find((t) => t.key === activeTeamKey)
 
   const sessionCountByPlayer = useMemo(() => {
@@ -126,10 +135,10 @@ export default function History() {
   const selectedPlayer = selectedSessions[0]?.player
     ?? activeTeam.roster.find((p) => p.name === selectedPlayerName)
 
-  function handleDeleteSession(id) {
+  async function handleDeleteSession(id) {
     if (!confirm('Supprimer cette session de l’historique ?')) return
-    deleteSession(id)
-    setSessions(getAllSessions())
+    await deleteSession(id)
+    setSessions(await getAllSessions())
     setOpenSessionId(null)
   }
 

@@ -775,8 +775,14 @@ export default function PlayerPerformance() {
   }, [currentIndex, players])
 
   // ── Process one merged sensor reading — drives heatmap, zones, tags and alerts ──
+  // Reads the current player from playerRef (not the `players`/`currentIndex`
+  // render-scope values) because this function is captured once inside the
+  // MQTT client's 'message' handler when connectMqtt() runs — closing over
+  // `players`/`currentIndex` directly would freeze them at their initial
+  // (empty) value and silently drop every incoming reading forever.
   function processReading(data) {
-    if (!players.length) return
+    const currentPlayer = playerRef.current
+    if (!currentPlayer) return
     const { gps, mpu } = data
     if (gps.speed > maxSpeedRef.current) maxSpeedRef.current = gps.speed
     totalDistRef.current += ((lastSpeedRef.current + gps.speed) / 2) * (1.5 / 3600)
@@ -796,7 +802,7 @@ export default function PlayerPerformance() {
       sats:     String(gps.satellites),
     })
 
-    const zone   = getZoneForPosition(players[currentIndex].position)
+    const zone   = getZoneForPosition(currentPlayer.position)
     const newPos = nextFieldPos(fieldPosRef.current, zone, gps.speed)
     fieldPosRef.current = newPos
     setCurrentFieldPos({ ...newPos })
@@ -829,7 +835,7 @@ export default function PlayerPerformance() {
     const distFromZone = Math.sqrt((newPos.x - zone.cx) ** 2 + (newPos.y - zone.cy) ** 2)
     if (distFromZone > 42) alerts.push({ type: 'position', msg: 'Joueur très loin de sa zone!', level: 'red' })
     else if (distFromZone > 28) alerts.push({ type: 'position', msg: 'Joueur hors de position', level: 'orange' })
-    const posStr = players[currentIndex].position
+    const posStr = currentPlayer.position
     if ((posStr.includes('Back') || posStr.includes('Goalkeeper')) && newPos.x > 75)
       alerts.push({ type: 'tactical', msg: 'Défenseur en zone offensive', level: 'orange' })
     if (posStr.includes('Attacker') && newPos.x < 30)
